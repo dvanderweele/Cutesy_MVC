@@ -1,0 +1,6 @@
+UP
+col~id~INTEGER PRIMARY KEY NOT NULL
+col~name~TEXT NOT NULL
+timestamps
+DOWN
+drop-table

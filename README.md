@@ -1,5 +1,7 @@
 # Micro MVC Framework
 
+## Overview
+
 Tentatively calling this project "Cutesy MVC." I'll probably call the command-line utility component something masculine like "cutify." Taylor Otwell doesn't have anything on my ability to name things.
 
 Literally developing this at least in the preliminary stages on repl.it on my phone. Just would like to practice python when I have the time, and also would be cool if the end product was something useful to me. 
@@ -8,13 +10,6 @@ Taking inspiration from two of my favorite projects: Laravel and React. Would al
 
 Obviously being a solo project that draws inspiration from two major projects, I am not implementing all of the features of React and Laravel. For example, I am creating systems to migrate, query, and model data from SQLite, but I am not building support for any other database systems.
 
+## Docs 
 
-
-
-
-
-
-
-
-
-
+Markdown formatted documentation files can be found in the docs folder.
