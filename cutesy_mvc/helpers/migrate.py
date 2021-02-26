@@ -231,6 +231,7 @@ def rollback():
 def refresh():
   dbname = config.get('db.current')
   dbpath = config.get(f'db.list.{dbname}')
+  dbpath = path.appendFileToRootDir(dbpath)
   if os.path.exists(dbpath):
     os.remove(dbpath)
   migrate()

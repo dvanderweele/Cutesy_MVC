@@ -111,11 +111,14 @@ class Where:
     self.__conditions = conditions
     self.__params = []
     self.__string = 'WHERE '
-  def getConditionString(self):
+    self.__string = self.__buildConditionString()
+  def __buildConditionString(self):
     res = self.__string
     for i in range(0, len(self.__conditions)):
       res += self.__processConditionRecord(self.__conditions[i], i)
     return res
+  def getConditionString(self):
+    return self.__string
   def getParams(self):
     return self.__params
   def __processConditionRecord(self, rec, idx):
@@ -144,7 +147,7 @@ class Where:
     return res 
 
 class Table:
-  def __init__(self, tableName):
+  def __init__(self, tableName = ''):
     self.__table = tableName
     self.__statement = ''
     self.__params = []
@@ -168,7 +171,7 @@ class Table:
           self.__statement += ', '
         self.__statement += f'{self.__columns[i]}'
       self.__statement += f' FROM {self.__table}'
-      if self.__conditions is not None:
+      if self.__conditions != None:
         self.__statement += ' '
         self.__statement += self.__conditions.getConditionString()
         for p in self.__conditions.getParams():
@@ -209,7 +212,8 @@ class Table:
       for i in range(0, len(self.__columns)):
         if i > 0:
           self.__statement += ','
-        self.__statement += f' {self.__columns[i]} = {self.__values[i]}'
+        self.__statement += f' {self.__columns[i]} = ?'
+        self.__params.append(self.__values[i])
       if self.__conditions is not None:
         self.__statement += ' '
         self.__statement += self.__conditions.getConditionString()
@@ -303,7 +307,11 @@ class Table:
   def condition(self,col,op,val):
     w = Where([{'type':'single','condition':(col,op,val)}])
     self.__conditions = w 
-    return self
+    return self 
+    
+  def limit(self,num):
+    self.__limit = num 
+    return self 
 
   def get(self):
     if self.__type == None:
@@ -322,7 +330,7 @@ class Table:
     return self 
     
   def chunk(self, size, cb):
-    if self.__type is not None:
+    if self.__type == None:
       self.__type = 'sel'
     if len(self.__columns) < 1:
       self.__columns.append('*')
@@ -331,22 +339,42 @@ class Table:
     self.__buildStatement() 
     res = self.__execute()
     discontinue = False
-    while not discontinue:
-      if not len(res) > 0:
-        break 
-      discontinue = False
+    while len(res) > 0 and not(discontinue):
+      self.__offset += size + 1
+      self.__statement = ""
+      self.__params = []
+      self.__buildStatement()
+      res = self.__execute()
       for rec in res:
         if not cb(rec):
           discontinue = True
           break
-      if not discontinue:
-        self.__offset += size
-        self.__buildStatement()
-        res = self.__execute()
       
   def chunkById(self, size, cb):
-    pass 
-    
+    if self.__type == None:
+      self.__type = 'sel'
+    if len(self.__columns) < 1:
+      self.__columns.append('*')
+    self.orderBy('id').limit(size)
+    last = 0
+    self.condition('id', '>',last)
+    self.__buildStatement() 
+    res = self.__execute()
+    discontinue = False
+    while len(res)>0 and not discontinue:
+      self.__conditions = None
+      self.condition('id','>',last)
+      self.__statement = ""
+      self.__params = []
+      self.__buildStatement() 
+      res = self.__execute()
+      for rec in res:
+        last = rec['id']
+        if not cb(rec):
+          discontinue = True
+          break
+      
+      
   # insert 
   def insert(self, columns, values):
     self.__type = 'ins'
@@ -379,20 +407,12 @@ class Table:
       self.__values.append(values[i])
     self.__buildStatement()
     self.__execute()
-  
-  # increment
-  def increment(self, column, amount = 1):
-    self.update((column,),(f'{column} + {amount}',))
-  
-  # decrement 
-  def decrement(self, column, amount = 1):
-    self.update((column,),(f'{column} - {amount}',))
     
-  def count(self, col):
+  def count(self, col='*'):
     self.__type = 'sel'
     self.__columns.append(f'Count({col})')
     self.__buildStatement()
-    return self.__execute()
+    return self.__execute()[0][0]
   
   #exists 
   def exists(self):
@@ -406,13 +426,13 @@ class Table:
     self.__type = 'sel'
     self.__columns.append(f'Max({col})')
     self.__buildStatement()
-    return self.__execute()
+    return self.__execute()[0][0]
   
   def minimum(self, col):
     self.__type = 'sel'
     self.__columns.append(f'Min({col})')
     self.__buildStatement()
-    return self.__execute()
+    return self.__execute()[0][0]
    
   
   def average(self, col):
@@ -429,14 +449,8 @@ class Table:
     self.__execute()
   
   # vacuum 
-  def vacuum(self, into = None):
+  def vacuum(self):
     conn = Connection()
     q = 'VACUUM'
-    p = None
-    if into is not None:
-      q += 'INTO ?'
-      p.append(into)
-      conn.cursor.execute(q,p)
-    else:
-      conn.cursor.execute(q)
-    conn.close()
+    conn.cursor.execute(q)
+    del conn

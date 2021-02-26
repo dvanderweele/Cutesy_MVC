@@ -1,5 +1,5 @@
 from datetime import datetime
-from cutesy_mvc.helpers import migrate
+from cutesy_mvc.helpers import migrate, path
 from cutesy_mvc.helpers.db import Where, Table
 
 def getNixTs():
@@ -64,8 +64,8 @@ cs = [
   ['book club', getNixTs()]
 ]
 
-#for c in cs:
-  #Table('club').insert(['name', 'created_at'], [[c[0], c[1]]])
+for c in cs:
+  Table('club').insert(['name', 'created_at'], [[c[0], c[1]]])
   
 recs = Table('club').get()
 for r in recs:
@@ -84,10 +84,10 @@ us = [
   ['Cark', 19, getNixTs()]
 ]
 
-#for u in us:
-  #Table('user').insert(['name', 'age', 'created_at'], [
-    #[u[0], u[1], u[2]]
-  #])
+for u in us:
+  Table('user').insert(['name', 'age', 'created_at'], [
+    [u[0], u[1], u[2]]
+  ])
 
 recs = Table('user').get() 
 for r in recs:
@@ -147,9 +147,9 @@ for r in rec:
   
 del rec
   
-#Table('user').insert(['name','age','created_at'],[
-#    ['Cark', 21, getNixTs()]
-#  ])
+Table('user').insert(['name','age','created_at'],[
+    ['Cark', 21, getNixTs()]
+  ])
 rec = Table('user').orderBy('name').get()
 for r in rec:
   print(f'Name: {r["name"]}, id: {r["id"]}')
@@ -162,31 +162,78 @@ for r in rec:
   
 del rec 
 
-#rec = Table('user').insertGetId(['name','age','created_at'],[
-#    ['Cark', 31, getNixTs()]
-#  ])
+rec = Table('user').insertGetId(['name','age','created_at'],[
+    ['Cark', 31, getNixTs()]
+  ])
+ 
+rec = Table('user').average('age')
+print(rec)
+del rec 
 
-Table('user').conditions(Where([{'type':'single','condition':('age', '=','31')}])).increment('age', 2)
+recs = Table('user').condition('name','=','Cark').get() 
+for r in recs:
+  print(f'Name: {r["name"]}, Age: {r["age"]}, ts: {r["created_at"]}, id: {r["id"]}')
+
+del recs
 
 recs = Table('user').get() 
 for r in recs:
   print(f'Name: {r["name"]}, Age: {r["age"]}, ts: {r["created_at"]}, id: {r["id"]}')
-
-Table('user').conditions(Where([{'type':'single','condition':('age', '=','33')}])).decrement('age', 2)
-
-recs = Table('user').get() 
-for r in recs:
-  print(f'Name: {r["name"]}, Age: {r["age"]}, ts: {r["created_at"]}, id: {r["id"]}')
-
+  
 del recs 
-recs = Table('user').average('age')
-print(recs)
+Table('user').limit(2).orderBy('age').condition('name', '=','Cark').update(['name','age'],['Carkk',2])
+recs = Table('user').get() 
+for r in recs:
+  print(f'Name: {r["name"]}, Age: {r["age"]}, ts: {r["created_at"]}, id: {r["id"]}')
+del recs 
+
+rec = Table('user').condition('name','=','Carkk').count()
+print(rec)
+del rec 
+print(Table('user').condition('name','=','Carkk').count('updated_at'))
+
+print(Table('user').condition('name','=','Carkk').exists())
+print(Table('user').condition('name','=','Carkkk').exists())
+print(Table('user').condition('name','=','Carkk').doesntExist())
+print(Table('user').condition('name','=','Carkkk').doesntExist())
+print(Table('user').condition('name','<>','Carkk').maximum('age'))
+print(Table('user').condition('name','<>','Carkk').minimum('age'))
+
+Table('user').condition('name','=','Carkk').delete()
+rec = Table('user').orderBy('name').get()
+for r in rec:
+  print(f'Name: {r["name"]}, id: {r["id"]}')
+del rec 
+
+Table('user').limit(2).orderBy('id').condition('name','=','Billy').delete()
+rec = Table('user').orderBy('name').get()
+for r in rec:
+  print(f'Name: {r["name"]}, id: {r["id"]}')
+del rec 
+
+Table().vacuum()
+
+count = 0
+
+def mycb(rec):
+  global count
+  count += 1
+  if count == 15:
+    return False
+  print(f'{rec["id"]} {rec["name"]}')
+  return True
+
+Table('user').condition('name','=','Jodi').chunk(5,mycb)
+
+count = 0
+
+Table('user').chunkById(5,mycb)
 
 # test_score seed
 # score real *
 # userId int *
 # created_at real *
-# updated_at real 
+# updated_at real
 
 # tested db components:
 # Where 
@@ -202,19 +249,16 @@ print(recs)
 ## distinct 
 ## columns 
 ## insertGetId
-## increment 
-## decrement 
 ## average 
-
-# Table To Test:
-## condition
+## condition 
+## limit 
 ## update 
-## count 
+## count
 ## exists 
-## doesn't exist
+## doesntExist
 ## maximum 
 ## minimum
 ## delete
 ## vacuum 
-## chunk (not implemented)
-## chunkById (not implemented)
+## chunk
+## chunkById
