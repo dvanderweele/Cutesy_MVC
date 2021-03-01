@@ -10,9 +10,8 @@ from ..helpers import config, path
 dataTypes = ('NULL', 'INTEGER', 'REAL', 'TEXT', 'BLOB')
 
 class Connection:
-  def __init__(self, rf = False):
-    self.__dbname = config.get('db.current')
-    self.__path = path.appendFileToRootDir(config.get(f'db.list.{self.__dbname}'))
+  def __init__(self, rf = False, tc = config.get(f'db.list.{config.get("db.current")}')):
+    self.__path = path.appendFileToRootDir(tc)
     self.__conn = sqlite3.connect(self.__path)
     if rf:
       self.__conn.row_factory = sqlite3.Row
@@ -160,6 +159,7 @@ class Table:
     self.__offset = None
     self.__distinct = False
     self.__values = []
+    self.__connection = config.get(f'db.list.{config.get("db.current")}')
   
   def __buildStatement(self):
     if self.__type == 'sel':
@@ -261,6 +261,10 @@ class Table:
       res = conn.cursor.execute(self.__statement, self.__params).fetchall()
       del conn
       return res
+      
+  def setConnection(self, conn):
+    self.__connection = conn 
+    return self
   
   def columns(self,cols):
     for c in cols:
@@ -339,6 +343,9 @@ class Table:
     self.__buildStatement() 
     res = self.__execute()
     discontinue = False
+    for rec in res:
+      if not cb(rec):
+        discontinue = True
     while len(res) > 0 and not(discontinue):
       self.__offset += size + 1
       self.__statement = ""
@@ -361,6 +368,10 @@ class Table:
     self.__buildStatement() 
     res = self.__execute()
     discontinue = False
+    for rec in res:
+      last = rec['id']
+      if not cb(rec):
+        discontinue = True
     while len(res)>0 and not discontinue:
       self.__conditions = None
       self.condition('id','>',last)

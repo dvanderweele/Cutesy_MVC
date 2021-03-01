@@ -236,20 +236,32 @@ def refresh():
     os.remove(dbpath)
   migrate()
 
-def schema():
-  conn = db.Connection()
+def schema(p = True, cs = config.get(f'db.list.{config.get("db.current")}')):
+  conn = db.Connection(False, cs)
   conn.cursor.execute(migrationTableQuery)
   tables = conn.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
   del conn
-  print("TABLES")
+  res = {}
+  if p:
+    print("TABLES")
   for t in tables:
-    print(t[0])
+    if p:
+      print(t[0])
     conn = db.Connection()
     conn.cursor.execute(f'PRAGMA table_info({t[0]})')
     cols = conn.cursor.fetchall()
     del conn
+    res[t[0]] = {}
     for c in cols:
-      print(f'+ {c[0]} {c[1]} {c[2]}')
+      if p:
+        print(f'+ {c[1]} {c[2]} {c[3]}')
+      else:
+        res[t[0]][c[1]] = {
+          'type': c[2],
+          'nullable': True if c[3] < 1 else False
+        }
+  return res
+
 
 def generateMigrationFile(migType, migTarget):
   ts = timestamp.hyphenatedTsStr()
