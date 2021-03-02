@@ -4,9 +4,8 @@ class Model:
   connection = config.get(f'db.list.{config.get("db.current")}')
   softDeletes = False 
   timestamps = True 
+  defaultRelations = []
   schema = migrate.schema(False, connection)
-  includeTrashed = False
-  exclusivelyTrashed= False
   
   def __init__(self):
     self.__originals = {}
@@ -18,6 +17,7 @@ class Model:
     self.__limit = None 
     self.__ordering = []
     self.__conditions = None
+    self.__relations = []
     self.__record = {}
     for c in self.__class__.schema[self.__class__.table].keys():
       self.__record[c] = None
@@ -34,6 +34,31 @@ class Model:
   def getOriginal(self):
     return self.__originals 
     
+  def __eagerLoad(self, relation):
+    if relation[0] == 'hasOne':
+      table = relation[1]
+      foreignKey = relation[2]
+    elif relation[0] == 'hasMany':
+      table = relation[1]
+      foreignKey = relation[2]
+    elif relation[0] == 'belongsTo':
+      table = relation[1]
+      localKey = relation[2]
+    elif relation[0] == 'belongsToMany':
+      pass 
+    
+  def __eagerLoadAll(self, relations):
+    for r in relations:
+      self.__eagerLoad(r)
+      
+  def withRelation(self, relation):
+    self.__relations.append(relation)
+    return self
+    
+  def withRelations(self, relations):
+    for relation in relations:
+      self.__relations.append(relation)
+  
   def isDirty(self, att = None):
     dirty = False
     if att != None:
@@ -59,6 +84,37 @@ class Model:
         res = False
         break
     return res
+
+  def __processTrashCondition(self):
+    if self.__class__.softDeletes:
+      c = None 
+      if self.__onlyTrashed:
+        if self.__conditions == None:
+          self.__conditions = db.Where([])
+        c = ('deleted_at', '<>', None)
+        self.__conditions.prependCondition({'type':'single','condition':c})
+    
+      elif not self.__includeTrashed:
+        if self.__conditions == None:
+          self.__conditions = db.Where([])
+        c = ('deleted_at', '=', None)
+        self.__conditions.prependCondition({'type':'single','condition':c})
+      else:
+        if self.__conditions == None:
+          self.__conditions = db.Where([])
+          c = {
+            'type': 'series',
+            'series': [
+              {
+                'type':'single',
+                'condition': ('deleted_at', '=', None)
+              },{
+                'type': 'single',
+                'operator': 'OR',
+                'condition': ('deleted_at', '<>', None)
+              }
+          }
+          self.__conditions.prependCondition(c)
     
   def trashed(self):
     if not(self.softDeletes) or 'deleted_at' not in self.schema[self.__class__.table].keys() or self['deleted_at'] == None:
@@ -68,6 +124,7 @@ class Model:
 
   def withTrashed(self):
     self.__includeTrashed = True
+    return self
     
   def onlyTrashed(self):
     self.__onlyTrashed = True
@@ -96,7 +153,8 @@ class Model:
       self[c] = res[0][c]
 
   def find(self, id):
-    res = db.Table(self.__class__.table).setConnection(self.__class__.connection).find(id)
+    self.__processTrashCondition()
+    res = db.Table(self.__class__.table).setConnection(self.__class__.connection).conditions(self.__conditions).find(id)
     if len(res) > 0:
       m = self.__class__()
       m.setOriginals(res[0])
@@ -114,8 +172,9 @@ class Model:
   def save(self):
     if self['id'] != None:
       # update
-      self['updated_at'] = timestamp.getNixTs()
-      self.__lastPushed['updated_at'] = self['created_at']
+      if self.__class__.timestamps:
+        self['updated_at'] = timestamp.getNixTs()
+        self.__lastPushed['updated_at'] = self['created_at']
       cols = []
       vals = []
       for k in self.__record.keys():
@@ -127,8 +186,9 @@ class Model:
       db.Table(self.__class__.table).setConnection(self.__class__.connection).condition('id','=',self['id']).update(cols,vals)
     else:
       # create
-      self['created_at'] = timestamp.getNixTs()
-      self.__lastPushed['created_at'] = self['created_at']
+      if self.__class__.timestamps:
+        self['created_at'] = timestamp.getNixTs()
+        self.__lastPushed['created_at'] = self['created_at']
       # update lastPushed dict
       cols = []
       vals = []
@@ -158,10 +218,6 @@ class Model:
     self.__conditions = ws
     return self
     
-  def distinct(self):
-    self.__distinct = True
-    return self
-    
   def get(self):
     q = db.Table(self.__class__.table).setConnection(self.__class__.connection)
     if self.__distinct:
@@ -188,12 +244,13 @@ class Model:
     statement = f'SELECT * FROM {self.__class__.table}'
     limit = size
     offset = 0
-    params = []
-    if self.__conditions != None:
-      statement += ' '
-      statement += self.__conditions.getConditionString()
-      for p in self.__conditions.getParams():
-        params.append(p)
+    params = [] 
+    self.__processTrashCondition()
+    statement += ' '
+    self.__conditions.parse()
+    statement += self.__conditions.getConditionString()
+    for p in self.__conditions.getParams():
+      params.append(p)
     statement += ' LIMIT ?'
     params.append(limit)
     statement += ' OFFSET ?'
@@ -215,11 +272,11 @@ class Model:
       offset += size + 1
       statement = f'SELECT * FROM {self.__class__.table}'
       params = []
-      if self.__conditions != None:
-        statement += ' '
-        statement += self.__conditions.getConditionString()
-        for p in self.__conditions.getParams():
-          params.append(p)
+      statement += ' '
+      self.__conditions.parse()
+      statement += self.__conditions.getConditionString()
+      for p in self.__conditions.getParams():
+        params.append(p)
       statement += ' LIMIT ?'
       params.append(limit)
       statement += ' OFFSET ?'
@@ -242,13 +299,15 @@ class Model:
     statement = f'SELECT * FROM {self.__class__.table}'
     limit = size
     last = 0
-    self.condition('id', '>', last)
+    if self.__conditions == None:
+      self.__conditions = db.Where([])
+    self.__conditions.prependCondition({'type':'single','condition':('id','>',last)})
+    self.__conditions.parse()
     params = []
-    if self.__conditions != None:
-      statement += ' '
-      statement += self.__conditions.getConditionString()
-      for p in self.__conditions.getParams():
-        params.append(p)
+    statement += ' '
+    statement += self.__conditions.getConditionString()
+    for p in self.__conditions.getParams():
+      params.append(p)
     statement += ' ORDER BY id LIMIT ?'
     params.append(limit)
     conn = db.Connection(True, self.__class__.connection)
@@ -266,15 +325,14 @@ class Model:
       if not cb(m):
         discontinue = True
     while len(res) > 0 and not(discontinue):
-      self.__conditions = None 
-      self.condition('id', '>', last)
+      self.__conditions.setCondition(0,{'type':'single','condition':('id','>',last)})
+      self.__conditions.parse()
       statement = f'SELECT * FROM {self.__class__.table}'
       params = []
-      if self.__conditions != None:
-        statement += ' '
-        statement += self.__conditions.getConditionString()
-        for p in self.__conditions.getParams():
-          params.append(p)
+      statement += ' '
+      statement += self.__conditions.getConditionString()
+      for p in self.__conditions.getParams():
+        params.append(p)
       statement += ' ORDER BY id LIMIT ?'
       params.append(limit)
       conn = db.Connection(True, self.__class__.connection)
@@ -294,23 +352,37 @@ class Model:
   
   def delete(self):
     if self.softDeletes:
-      pass 
+      db.Table(self.__class__.table).setConnection(self.__class__.connection).condition('id', '=', self['id']).update(['deleted_at'], [timestamp.getNixTs()])
     else:
       q = db.Table(self.__class__.table).setConnection(self.__class__.connection)
       if self.__conditions!= None:
         q = q.conditions(self.__conditions)
       else:
-        q = q.condition('id','=',self['id'])
+        q = q.condition('id', '=', self['id'])
       q.delete()
+  
+  def forceDelete(self):
+    q = db.Table(self.__class__.table).setConnection(self.__class__.connection)
+    if self.__conditions!= None:
+      q = q.conditions(self.__conditions)
+    else:
+      q = q.condition('id', '=', self['id'])
+    q.delete()
   
   def destroy(self, targetId):
     if self.softDeletes:
-      pass
+      db.Table(self.__class__.table).setConnection(self.__class__.connection).condition('id', '=', targetId).update(['deleted_at'],[timestamp.getNixTs()])
     else:
-      db.Table(self.__class__.table).setConnection(self.__class__.connection).condition('id','=',targetId).delete()
+      db.Table(self.__class__.table).setConnection(self.__class__.connection).condition('id', '=', targetId).delete()
+  
+  def restore(self):
+    if self.__class__.softDeletes:
+      db.Table(self.__class__.table).setConnection(self.__class__.connection).condition('id','=', self['id']).update(['deleted_at'],[None])
   
   def hasOne(self, model, foreign):
-    res = db.Table(model.__class__.table).setConnection(model.__class__.connection).condition(foreign,'=',self['id']).first()
+    self.__processTrashCondition()
+    self.__conditions.prependCondition({'type':'single', 'condition': (foreign, '=', self['id'])})
+    res = db.Table(model.__class__.table).setConnection(model.__class__.connection).conditions(self.__conditions).first()
     if len(res) < 1:
       return None 
     else:
@@ -322,7 +394,9 @@ class Model:
       return m 
       
   def hasMany(self,model,foreign):
-    res = db.Table(model.__class__.table).setConnection(model.__class__.connection).condition(foreign,'=',self['id']).get()
+    self.__processTrashCondition()
+    self.__conditions.prependCondition({'type':'single', 'condition': (foreign, '=', self['id'])})
+    res = db.Table(model.__class__.table).setConnection(model.__class__.connection).conditions(self.__conditions).get()
     if len(res) < 1:
       return [] 
     else:
@@ -335,10 +409,11 @@ class Model:
         m.setLastPulled(rec)
         coll.append(m)
       return coll
-    
   
   def belongsTo(self,model,foreign):
-    res = db.Table(model.__class__.table).setConnection(model.__class__.connection).condition('id','=',self[foreign]).first()
+    self.__processTrashCondition()
+    self.__conditions.prependCondition({'type':'single', 'condition': ('id', '=', self[foreign])})
+    res = db.Table(model.__class__.table).setConnection(model.__class__.connection).conditions(self.__conditions).first()
     if len(res) < 1:
       return None 
     else:
@@ -353,7 +428,9 @@ class Model:
     joins = [k[model.__class__.table + '_id'] for k in db.Table(intermediary).setConnection(conn).condition(self.__class__.table+'_id','=',self['id']).get()]
     res = []
     for j in joins:
-      rec = db.Table(model.__class__.table).setConnection(model.__class__.connection).condition('id','=',j).first()
+      self.__processTrashCondition()
+      self.__conditions.prependCondition({'type':'single', 'condition': ('id', '=', j)})
+      rec = db.Table(model.__class__.table).setConnection(model.__class__.connection).conditions(self.__conditions).first()
       m = model.__class__()
       m.setOriginals(rec[0])
       for c in rec[0].keys():
@@ -362,5 +439,3 @@ class Model:
       res.append(m)
     return res
     
-    
-  

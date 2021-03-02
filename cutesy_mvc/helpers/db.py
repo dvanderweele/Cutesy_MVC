@@ -106,20 +106,37 @@ class AlterTableStatement:
     return False
     
 class Where: 
-  def __init__(self, conditions):
+  def __init__(self, conditions = []):
     self.__conditions = conditions
     self.__params = []
-    self.__string = 'WHERE '
-    self.__string = self.__buildConditionString()
+    self.__parsed = False
+  
+  def parse(self):
+    if not self.__parsed:
+      self.__string = self.__buildConditionString()
+    
   def __buildConditionString(self):
-    res = self.__string
+    res = 'WHERE '
     for i in range(0, len(self.__conditions)):
       res += self.__processConditionRecord(self.__conditions[i], i)
     return res
+    
   def getConditionString(self):
     return self.__string
+    
   def getParams(self):
     return self.__params
+    
+  def prependCondition(self, conditionDict, operator = 'AND'):
+    self.__parsed = False 
+    self.__conditions.insert(0,conditionDict)
+      if len(self.__conditions) > 1:
+        self.__conditions[1]['operator'] = operator 
+        
+  def setCondition(self, index, conditionDict):
+    self.__parsed = False
+    self.__conditions[index] = conditionDict
+    
   def __processConditionRecord(self, rec, idx):
     res = ''
     if rec['type'] == 'single':
@@ -162,6 +179,8 @@ class Table:
     self.__connection = config.get(f'db.list.{config.get("db.current")}')
   
   def __buildStatement(self):
+    if self.__conditions != None:
+      self.__conditions.parse()
     if self.__type == 'sel':
       self.__statement += 'SELECT '
       if self.__distinct:
@@ -277,7 +296,9 @@ class Table:
       'type': 'single',
       'condition': ('id', '=', id)
     }])
-    self.__conditions = w
+    if self.__conditions == None:
+      self.__conditions = Where([])
+    self.__conditions.prependCondition(w)
     self.__columns.append('*')
     self.__limit = '1'
     self.__buildStatement()
@@ -364,7 +385,9 @@ class Table:
       self.__columns.append('*')
     self.orderBy('id').limit(size)
     last = 0
-    self.condition('id', '>',last)
+    if self.__conditions == None:
+      self.__conditions = Where([])
+    self.__conditions.prependCondition({'type':'single','condition':('id','<',last)})
     self.__buildStatement() 
     res = self.__execute()
     discontinue = False
@@ -373,8 +396,7 @@ class Table:
       if not cb(rec):
         discontinue = True
     while len(res)>0 and not discontinue:
-      self.__conditions = None
-      self.condition('id','>',last)
+      self.__conditions.setCondition(0,{'type':'single','condition':('id','>',last)})
       self.__statement = ""
       self.__params = []
       self.__buildStatement() 
@@ -384,7 +406,6 @@ class Table:
         if not cb(rec):
           discontinue = True
           break
-      
       
   # insert 
   def insert(self, columns, values):
