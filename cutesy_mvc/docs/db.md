@@ -243,6 +243,7 @@ After you pass the conditions into the `Where` constructor, there are four metho
 - getParams
 - prependCondition
 - setCondition
+- parse
 
 Typically you won't need to call these methods yourself. They will usually be called internally by the Table object after you pass the Where object into the Table object's `conditions` method.
 
@@ -262,10 +263,32 @@ c = [
 
 w = Where(c)
 
+w.parse()
+
 w.getConditionString()
 # Output: 'WHERE (id < ?)'
 w.getParams()
 # Output: [5]
+```
+
+Note that if the third entry of the condition in a 'single' type dictionary is not a string and is an iterable sequence like a list or tuple, it is assumed you are going to be building the following type of condition:
+
+```
+c = [
+  {
+    'type':'single',
+    'condition': ('userId', 'NOT IN', [2, 3, 7, 9])
+  }
+]
+
+w = Where(c)
+
+w.parse()
+
+w.getConditionString()
+# Output: 'WHERE (userId NOT IN (?, ?, ?, ?))'
+w.getParams()
+# Output: [2, 3, 7, 9]
 ```
 
 A bit more complicated of an example. Note that the first entry within a list, no matter how nested (or not) that list is within the condition definition, is the only entry without an `operator` key.
@@ -292,6 +315,8 @@ c = [
 ]
 
 w = Where(c)
+
+w.parse()
 
 w.getConditionString()
 # Output: 'WHERE (((x = ?) AND (y = ?)) OR z = ?)'

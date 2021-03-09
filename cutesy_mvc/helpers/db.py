@@ -1,4 +1,4 @@
-import sqlite3
+import sqlite3, collections
 from ..helpers import config, path 
 
 # SQLite Data Types
@@ -143,8 +143,17 @@ class Where:
       if idx != 0:
         res+= f' {rec["operator"]} '
       res += f'({rec["condition"][0]} {rec["condition"][1]}'
-      res += ' ?'
-      self.__params.append(rec['condition'][2])
+      if type(rec['condition'][2]) is not str and isinstance(rec['condition'][2], collections.abc.Sequence):
+        res+='('
+        for i in range(0,len(rec['condition'][2])):
+          res+= '?'
+          self.__params.append(rec['condition'][2])
+          if i < len(rec['condition'][2]) - 1:
+            res+=', '
+        res+=')'
+      else:
+        res += ' ?'
+        self.__params.append(rec['condition'][2])
       res += ')'
     elif rec['type'] == 'series':
       if idx != 0:
