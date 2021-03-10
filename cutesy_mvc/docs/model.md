@@ -30,7 +30,7 @@ By default this is set to `False` in the `Model` parent class. If you set it to 
 
 By default, this is set to `True` in the `Model` base class. You can turn it off by setting it to `False` in your derived class. When it is turned on, records will be timestamped when they are created and whenever they are updated via the Model system. 
 
-### `is` and `isNot`
+### `isSameModel` and `isNotSameModel`
 
 Pass in another model to either of these methods to determine if the models are the same model or not (comparing primary key, table, and database connection).
 
@@ -130,8 +130,6 @@ Remove soft deleted status from current model.
 
 If you wish to define relations for a user-defined model, you will define them in a dictionary on the class attribute `relations` within your user-defined model. The keys of the dictionary will be names that you will use to refer to the relations when loading them. 
 
-If you want any of the relations to be eager loaded automatically whenever a model is hydrated, define a `defaultRelations` class attribute with a list containing the names of all such relations. Note that these relations will be automatically loaded when your model is hydrated as a result of a query, but tertiary and n-ary models will not be automatically loaded as a result of this `defaultRelations` definition. This is to prevent accidentally loading an entire database into memory. 
-
 #### `hasOne`
 
 Look at the following example:
@@ -166,7 +164,6 @@ class Apartment(Model):
       'foreign': 'unit_number'
     }
   }
-  defaultRelations = ('tenant',)
 ```
 This type of relation allows you to define a `default` dictionary of key-value pairs to use in the event that result of the relationship query is `null`.
 
@@ -187,7 +184,6 @@ class Apartment(Model):
       }
     }
   }
-  defaultRelations = ('tenant',)
 ```
 
 #### `hasMany`
@@ -212,7 +208,6 @@ class User(Model):
       'model': ParkingSpace
     }
   }
-  defaultRelations = ('apartment', 'parkingSpace')
 ```
 
 #### `belongsTo`
@@ -435,7 +430,7 @@ from hashtag import Hashtag
 from hashtagable import Hashtagable 
 
 class Comment(Model):
-  table = 'commentcomment'
+  table = 'comment'
   relations = {
     'hashtags': {
       'type': 'morphedByMany',
@@ -463,9 +458,15 @@ class Hashtag(Model):
 ```python
 from ..helpers import Model
 from hashtag import Hashtag
+from comment import Comment 
+from post import Post 
 
 class Hashtagable(Model):
   table = 'hashtagable'
+  morphs = {
+    'comment': Comment,
+    'post': Post 
+  }
   relations = {
     'hashtag': {
       'type': 'poly',
@@ -474,51 +475,14 @@ class Hashtagable(Model):
   }
 ```
 
-It will be assumed, no matter what you named your pivot class, that it contains an `id` column, a column named after the table plus `_id` concatenated (i.e. `hashtagable_id`), a column named after the table plus `_type` concatenated (i.e. `hashtagable_type`), and a column named after the table of the model defining the `morphToMany` relationship with `_id` concatenated (i.e. `hashtag_id`).
+It will be assumed, no matter what you named your pivot class, that it contains an `id` column, a column named after the table plus `_id` concatenated (i.e. `hashtagable_id`), a column named after the table plus `_type` concatenated (i.e. `hashtagable_type`), and a column named after the table of the model defining the `morphToMany` relationship with `_id` concatenated (i.e. `hashtag_id`). 
+
+Also note that the model playing the pivot role in a polymorphic many-to-many relationship (in this case `Hashtagable`) is expected to have a class member variable called `morphs` with a dictionary containing all the unique strings found its table's 'able_type' column as keys paired with their respective classes.
+
+Finally, note that in the example above, if you have a hydrated `Hashtag` model and you load the `hashtagables` relation, the list of hydrated models assigned to the `hashtagables` may contain models of both the `Post` and `Comment` types. This may be counterintuitive if you were expecting it to literally load a list of hydrated `Hashtagable` models. 
 
 ### Loading `relations`
 
-There are multiple ways to hydrate related models.
-
-#### `defaultRelations`, `withRelations`, and `without`
-
-List the names of the `relations` you want to load automatically when a model is hydrated in the `defaultRelations` class attribute.
-
-If you wish to skip one or more of those specified relations when building a query, use the `without` method by passing into it a list or tuple of relation names. The `withRelations` method conversely allows you to ensure the loading of related models not specified in the `defaultRelations` list.
-
-```python
-from ..helpers.model import Model 
-from author import Author 
-from comment import Comment
-
-class Article(Model):
-  table = 'article'
-  relations = {
-    'author': {
-      'type': 'belongsTo',
-      'model': Author
-    },
-    'comments': {
-      'type': 'hasMany',
-      'model': Comment 
-    }
-  }
-  defaultRelations = ('author',)
-  
-articles = Article().withRelations(('comments',)).without(('author',)).allModels()
-# articles is a List of hydrated Article models, none of which have their author loaded and all of which have their comment relations loaded.
-```
-
-Note that this rule will not apply when a model is hydrated as a result of one of the operations in the following sections. For example, if you use the `load` function to load a `Post`'s `comments`, your `Comment` models will not automatically load their `Author` relations even if they are configured to do so automatically.
-
 #### `load`
 
-If after a model is hydrated without  certain `relations` loaded, because of one of the mechanisms just discussed, you want to load one, pass in a list or tuple of the one(s) you want to the `load` function.
-
-#### `withCount`, `withSum`, `withMin`, `withMax`, `withAvg`
-
-The same mechanism as the `withRelations` method. All except `withCount` require a second parameter in the form of a column name. Will place the calculated scalar value as an attribute on the model (e.g. `comments_count`, `comments_score_avg`, etc).
-
-#### `loadCount`, `loadSum`, `loadAvg`, `loadMin`, `loadMax`
-
-Same as last section but with `load` function mechanism.
+After a model is hydrated, pass in the name of the one you want to the `load` function. Eager loading mechanisms are not suppported.

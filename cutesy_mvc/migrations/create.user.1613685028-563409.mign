@@ -1,9 +1,0 @@
-UP
-col~id~INTEGER PRIMARY KEY NOT NULL
-col~name~TEXT NOT NULL
-col~age~INTEGER NOT NULL
-col~clubId~INTEGER
-timestamps
-foreign~clubId~club~id
-DOWN
-drop-table

@@ -4,7 +4,6 @@ class Model:
   connection = config.get(f'db.list.{config.get("db.current")}')
   softDeletes = False 
   timestamps = True 
-  defaultRelations = []
   relations = {}
   schema = migrate.schema(False, connection)
   
@@ -18,8 +17,6 @@ class Model:
     self.__limit = None 
     self.__ordering = []
     self.__conditions = None
-    self.__with = []
-    self.__without = []
     self.__loadedRelations = []
     self.__record = {}
     for c in self.__class__.schema[self.__class__.table].keys():
@@ -32,6 +29,15 @@ class Model:
   def __getitem__(self, key):
     return self.__record[key]
 
+  def isSameModel(self, other):
+    res = False 
+    if self['id'] == other['id'] and self.__class__.table == other.__class__.table and self.__class__.connection == other.__class__.connection:
+      res = True
+    return res
+
+  def isNotSameModel(self, other):
+    return not(self.isSameModel(other))
+
   def __setitem__(self, key, newval):
     self.__record[key] = newval
 
@@ -40,14 +46,6 @@ class Model:
     
   def getOriginal(self):
     return self.__originals 
-      
-  def withRelations(self, relations):
-    for relation in relations:
-      self.__with.append(relation)
-  
-  def without(self, relations):
-    for r in relations:
-      self.__without.append(r)
   
   def isDirty(self, att = None):
     dirty = False
@@ -347,22 +345,31 @@ class Model:
     if name in self.__class__.relations.keys() and 'id' in self.keys() and self['id'] != None:
       if self.__class__.relations['name']['type'] == 'hasOne':
         self.__hasOne(name)
+        self.__loadedRelations.append(name)
       elif self.__class__.relations['name']['type'] == 'hasMany':
         self.__hasMany(name)
+        self.__loadedRelations.append(name)
       elif self.__class__.relations['name']['type'] == 'belongsTo':
         self.__belongsTo(name)
+        self.__loadedRelations.append(name)
       elif self.__class__.relations['name']['type'] == 'belongsToMany':
         self.__belongsToMany(name)
+        self.__loadedRelations.append(name)
       elif self.__class__.relations['name']['type'] == 'morphOne':
         self.__morphOne(name)
+        self.__loadedRelations.append(name)
       elif self.__class__.relations['name']['type'] == 'morphTo':
         self.__morphTo(name)
+        self.__loadedRelations.append(name)
       elif self.__class__.relations['name']['type'] == 'morphMany':
         self.__morphMany(name)
+        self.__loadedRelations.append(name)
       elif self.__class__.relations['name']['type'] == 'morphToMany':
         self.__morphToMany(name)
+        self.__loadedRelations.append(name)
       elif self.__class__.relations['name']['type'] == 'morphedByMany':
         self.__morphedByMany(name)
+        self.__loadedRelations.append(name)
   
   def __hasOne(self, name):
     r = self.__class__.relations[name]
@@ -370,7 +377,13 @@ class Model:
     foreign = self.__class__.table + '_id'
     if 'foreign' in r.keys():
       foreign = r['foreign']
-    res = db.Table(model.__class__.table).setConnection(model.__class__.connection).limit(1).condition(foreign, '=', self['id']).get()
+    self.__conditions = db.Where([{'type':'single','condition':(foreign,'=',self['id'])}])
+    self.__processTrashCondition()
+    q = db.Table(model.__class__.table).setConnection(model.__class__.connection).limit(1).conditions(self.__conditions)
+    if len(self.__ordering) > 0:
+      for o in self.__ordering:
+        q = q.orderBy(o[0],o[1])
+    res = q.get()
     if len(res) < 1:
       if 'default' in r.keys():
         m = model(r['default'])
@@ -389,7 +402,15 @@ class Model:
     foreign = self.__class__.table + '_id'
     if 'foreign' in r.keys():
       foreign = r['foreign']
-    res = db.Table(model.__class__.table).setConnection(model.__class__.connection).condition(foreign, '=', self['id']).get()
+    self.__conditions = db.Where([{'type':'single','condition':(foreign,'=',self['id'])}])
+    self.__processTrashCondition()
+    q = db.Table(model.__class__.table).setConnection(model.__class__.connection).conditions(self.__conditions)
+    if self.__limit != None:
+      q = q.limit(self.__limit)
+    if len(self.__ordering) > 0:
+      for o in self.__ordering:
+        q = q.orderBy(o[0],o[1])
+    res = q.get()
     if len(res) < 1:
       self[name] = None 
     else:
@@ -497,12 +518,83 @@ class Model:
         self[name] = m 
   
   def __morphMany(self, name):
-    pass 
+    r = self.__class__.relations[name]
+    model = r['model']
+    able_id = model.__class__.table + 'able_id'
+    able_type = model.__class__.table + 'able_type'
+    owner_string = None
+    for p in model.__class__.owners.items():
+      if p[1] == self.__class__:
+        owner_string = p[0]
+        break 
+    if owner_string == None:
+      self[name] = None 
+    else:
+      c = db.Where([{'type':'series','series':[{'type':'single','condition':(able_id,'=',self['id'])},{'type':'single','operator':'AND','condition':(able_type,'=',owner_string)}]}])
+      c.parse()
+      res = db.Table(model.__class__.table).setConnection(model.__class__.connection).conditions(c).get()
+      if len(res) < 1:
+        self[name] = None 
+      else:
+        rel = []
+        for rec in res:
+          m = model.__class__(rec)
+          m.setOriginals(rec)
+          rel.append(m)
+        self[name] = rel 
   
   def __morphToMany(self, name):
-    pass
+    # owned 
+    r = self.__class__.relations[name]
+    pivot = r['pivot']
+    foreign = self.__class__.table + '_id'
+    pivs = db.Table(pivot.__class__.table).setConnection(pivot.__class__.connection).condition(foreign,'=',self['id']).get()
+    if len(pivs) < 1:
+      self[name] = None 
+    else:
+      rel = []
+      able_id = pivot.__class__.table + '_id'
+      able_type = pivot.__class__.table + '_type'
+      for p in pivs:
+        if p[able_type] in pivot.__class__.morphs.keys():
+          m = pivot.__class__.morphs[able_type]
+          i = p[able_id]
+          res = db.Table(m.__class__.table).setConnection(m.__class__.connection).condition('id','=',i).first()
+          if len(res) > 0:
+            o = m(res[0])
+            o.setOriginals(res[0])
+            rel.append[o]
+      if len(rel) < 1:
+        self[name] = None 
+      else: 
+        self[name] = rel 
   
   def __morphedByMany(self, name):
-    pass 
-  
-  
+    # owners 
+    r = self.__class__.relations[name]
+    model = r['model']
+    pivot = r['pivot']
+    owner_string = None
+    for p in model.__class__.owners.items():
+      if p[1] == self.__class__:
+        owner_string = p[0]
+        break 
+    if owner_string == None:
+      self[name] = None 
+    else:
+      c = db.Where([{'type':'series','series':[{'type':'single','condition':(pivot.__class__.table + 'able_id','=',self['id'])},{'type':'single','operator':'AND','condition':(pivot.__class__.table + 'able_type','=',owner_string)}]}])
+      c.parse()
+    mids = [k[model.__class__.table + '_id'] for k in db.Table(pivot.__class__.table).setConnection(pivot.__class__.connection).columns((model.__class__.table + '_id',)).conditions(c).get()]
+    if len(mids) < 1:
+      self[name] = None 
+    else:
+      res = db.Table(model.__class__.table).setConnection(model.__class__.connection).condition('id', 'IN', mids).get()
+      if len(res) < 1:
+        self[name] = None 
+      else:
+        rel = []
+        for rec in res:
+          m = model(rec)
+          m.setOriginals(m)
+          rel.append(m)
+        self[name] = rel 

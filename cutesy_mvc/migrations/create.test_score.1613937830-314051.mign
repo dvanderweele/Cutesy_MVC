@@ -1,8 +1,0 @@
-UP
-col~id~INTEGER PRIMARY KEY NOT NULL
-col~score~REAL NOT NULL
-col~userId~INTEGER NOT NULL
-timestamps
-foreign~userId~user~id
-DOWN
-drop-table
