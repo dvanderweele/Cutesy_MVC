@@ -1,7 +1,4 @@
-
-
-
-from ..helpers import migrate
+from ..helpers import migrate, path
 
 def handleCuteness(userInput):
   argParts = userInput.split(':')
@@ -10,6 +7,13 @@ def handleCuteness(userInput):
       migType = argParts[2]
       migTarget = argParts[3]
       migrate.generateMigrationFile(migType, migTarget)
+    elif argParts[1] == 'model':
+      fn = f'{argParts[2]}.py'
+      p = path.appendDirToRootDir('models')
+      p = path.appendFileToDir(p, fn)
+      outfile = open(p, 'w')
+      outfile.write(f'from ..helpers.model import Model\n\nclass {argParts[2]}(Model):\n\tpass')
+      outfile.close()
   elif argParts[0] == 'migrate':
     migrate.migrate()
   elif argParts[0] == 'rollback-migrations':
