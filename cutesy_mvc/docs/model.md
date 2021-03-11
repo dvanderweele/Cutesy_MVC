@@ -146,7 +146,6 @@ class Apartment(Model):
       'model': Tenant
     }
   }
-  defaultRelations = ('tenant',)
 ```
 
 It will be assumed that the table at the connection defined for the `Tenant` model will have a foreign key column named after the `Apartment` model's table name plus `_id` concatenated (i.e. `apartment_id`). If you name the foreign key column something else, define its name as follows:
@@ -327,7 +326,9 @@ class Course(Model):
   }
 ```
 
-Pivot tables will not be inferred. You must explicitly define their existence with a user-defined model that extends the `Model` class. There is no special `Pivot` class. You must explicitly define the pivot table name in that model. Customizing the connection is optional. Pivot tables should not use composite primary keys, but an incrementing primary key column named `id`. By default timestamps are turned on for pivot models just like all other models, so turn them off if you need to do so. In the event that you want to use timestamps for your pivot model, the `updated_at` timestamp in most cases won't ever be updated except when one of the models in the many-to-many relationship has a `touch` event that affects the timestamp in the other model. In that case, the timestamp in the pivot table will be updated as well.
+Pivot tables will not be inferred. You must explicitly define their existence with a user-defined model that extends the `Model` class. There is no special `Pivot` class. You must explicitly define the pivot table name in that model. Customizing the connection is optional. Pivot tables should not use composite primary keys, but an incrementing primary key column named `id`. By default timestamps are turned on for pivot models just like all other models, so turn them off if you need to do so. 
+
+In the event that you want to use timestamps for your pivot model, the `updated_at` timestamp in most cases won't ever be updated, even when a timestamp touch 'event' travels through the model. In order to directly access the pivot model, access it via the 'pivot' attribute on a model hydrated as a result of a relationship loading. From there you can update the timestamp as needed.
 
 ```python
 from student import Student 

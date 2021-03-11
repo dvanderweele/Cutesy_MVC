@@ -1,0 +1,8 @@
+UP
+col~id~INTEGER PRIMARY KEY NOT NULL
+col~body~TEXT NOT NULL
+col~blog_post_id~INTEGER NOT NULL
+timestamps
+foreign~blog_post_id~blog_post~id
+DOWN
+drop-table

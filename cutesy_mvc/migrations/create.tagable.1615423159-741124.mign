@@ -1,0 +1,8 @@
+UP
+col~id~INTEGER PRIMARY KEY NOT NULL
+col~tag_id~INTEGER NOT NULL
+col~tagable_id~INTEGER NOT NULL
+col~tagable_type~TEXT NOT NULL
+FOREIGN~tag_id~tag~id
+DOWN
+drop-table

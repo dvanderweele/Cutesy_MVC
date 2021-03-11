@@ -130,8 +130,8 @@ class Where:
   def prependCondition(self, conditionDict, operator = 'AND'):
     self.__parsed = False 
     self.__conditions.insert(0,conditionDict)
-      if len(self.__conditions) > 1:
-        self.__conditions[1]['operator'] = operator 
+    if len(self.__conditions) > 1:
+      self.__conditions[1]['operator'] = operator 
         
   def setCondition(self, index, conditionDict):
     self.__parsed = False

@@ -1,0 +1,7 @@
+UP
+col~id~INTEGER PRIMARY KEY NOT NULL
+col~tag~TEXT NOT NULL
+col~hashtagable_id~INTEGER
+col~hashtagable_type~TEXT
+DOWN
+drop-table

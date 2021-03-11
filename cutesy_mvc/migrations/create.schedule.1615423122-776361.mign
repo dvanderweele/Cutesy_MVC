@@ -1,0 +1,9 @@
+UP
+col~id~INTEGER PRIMARY KEY NOT NULL
+col~student_id~INTEGER NOT NULL
+col~course_id~INTEGER NOT NULL 
+timestamps
+foreign~student_id~student~id
+foreign~course_id~course~id
+DOWN
+drop-table

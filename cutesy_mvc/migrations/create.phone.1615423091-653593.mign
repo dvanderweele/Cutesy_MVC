@@ -1,0 +1,8 @@
+UP
+col~id~INTEGER PRIMARY KEY NOT NULL
+col~IMEI~INTEGER NOT NULL
+col~customer_id~INTEGER
+foreign~customer_id~customer~id
+timestamps
+DOWN
+drop-table

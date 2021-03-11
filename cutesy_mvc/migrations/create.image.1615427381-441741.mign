@@ -1,0 +1,8 @@
+UP
+col~id~INTEGER PRIMARY KEY NOT NULL
+col~alt~TEXT
+col~URL~TEXT NOT NULL
+col~imageable_id~INTEGER
+col~imageable_type~TEXT
+DOWN
+drop-table

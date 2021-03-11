@@ -1,10 +1,12 @@
-from ..helpers import config, db, migrate, timestamp 
+from ..helpers import config, db, migrate, timestamp
+import collections
 
 class Model:
   connection = config.get(f'db.list.{config.get("db.current")}')
   softDeletes = False 
   timestamps = True 
   relations = {}
+  touch = []
   schema = migrate.schema(False, connection)
   
   def __init__(self, values = None):
@@ -156,6 +158,7 @@ class Model:
         vals.append(self.__record[k])
       # update record 
       db.Table(self.__class__.table).setConnection(self.__class__.connection).condition('id','=',self['id']).update(cols,vals)
+      self.__touchIfNeeded()
     else:
       # create
       if self.__class__.timestamps:
@@ -320,6 +323,7 @@ class Model:
       else:
         q = q.condition('id', '=', self['id'])
       q.delete()
+    self.__touchIfNeeded()
   
   def forceDelete(self):
     q = db.Table(self.__class__.table).setConnection(self.__class__.connection)
@@ -328,6 +332,7 @@ class Model:
     else:
       q = q.condition('id', '=', self['id'])
     q.delete()
+    self.__touchIfNeeded()
   
   def destroy(self, targetId):
     if self.softDeletes:
@@ -338,6 +343,7 @@ class Model:
   def restore(self):
     if self.__class__.softDeletes:
       db.Table(self.__class__.table).setConnection(self.__class__.connection).condition('id','=', self['id']).update(['deleted_at'],[None])
+      self.__touchIfNeeded()
   
   # relation loaders 
   
@@ -440,7 +446,6 @@ class Model:
       m.setOriginals(res[0])
       self[name] = m
   
-  
   def __belongsToMany(self, name):
     r = self.__class__.relations[name]
     model = r['model']
@@ -464,6 +469,10 @@ class Model:
       for r in res:
         m = model.__class__(r)
         m.setOriginals(r)
+        pr = db.Table(pivot.__class__.table).setConnection(pivot.__class__.connection).conditions(db.Where([{'type':'single','condition':(foreign, '=', m['id'])},{'type':'single','operator':'AND','condition':(local, '=', self['id'])}])).first()
+        p = pivot.__class__(pr)
+        p.setOriginals(pr)
+        m['pivot'] = p
         rel.append(m)
       self[name] = rel 
   
@@ -598,3 +607,17 @@ class Model:
           m.setOriginals(m)
           rel.append(m)
         self[name] = rel 
+
+  def __touchIfNeeded(self):
+    if len(self.__class__.touch) > 0:
+      for rel in self.__class__.touch:
+        if rel not in self.__loadedRelations:
+          self.load(rel)
+        if self[rel] != None:
+          if type(self[rel]) is not str and isinstance(self[rel], collections.abc.Sequence):
+            for m in self[rel]:
+              m['updated_at'] = timestamp.getNixTs() 
+              m.save()
+          else: 
+            self[rel]['updated_at'] = timestamp.getNixTs()
+            self[rel].save()
