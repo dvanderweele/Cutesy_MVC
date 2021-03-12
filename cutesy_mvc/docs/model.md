@@ -130,12 +130,29 @@ Remove soft deleted status from current model.
 
 If you wish to define relations for a user-defined model, you will define them in a dictionary on the class attribute `relations` within your user-defined model. The keys of the dictionary will be names that you will use to refer to the relations when loading them. 
 
+#### `_index.py`
+
+A file called `_index.py` must be found in the `models` directory. In it, you must have a registry variable that defines a dictionary where the keys are strings you will use to refer to the classes stores as values. For example:
+
+```python
+# _index.py 
+from .BlogPost import BlogPost
+from .Comment import Comment 
+
+registry = {
+    'BlogPost': BlogPost,
+    'Comment': Comment
+}
+
+```
+
+In the above example, you are importing the user-defined model classes `BlogPost` and `Comment` from the `BlogPost.py` and `Comment.py` files respectively in the same directory. the keys you assign them to in the registry dictionary will be used in your relation definitions in your user-defined models. You must register all of your user-defined models here if they will be participating in a relationship.
+
 #### `hasOne`
 
 Look at the following example:
 
 ```python
-from tenant import Tenant
 from ..helpers.model import Model
 
 class Apartment(Model):
@@ -143,15 +160,14 @@ class Apartment(Model):
   relations = {
     'tenant': {
       'type': 'hasOne',
-      'model': Tenant
+      'model': 'Tenant'
     }
   }
 ```
 
-It will be assumed that the table at the connection defined for the `Tenant` model will have a foreign key column named after the `Apartment` model's table name plus `_id` concatenated (i.e. `apartment_id`). If you name the foreign key column something else, define its name as follows:
+It will be assumed that the table at the connection defined for the `Tenant` model (note that the `'Tenant'` string is the key for the `Tenant` model class in the`_index.py` registry we just discussed) will have a foreign key column named after the `Apartment` model's table name plus `_id` concatenated (i.e. `apartment_id`). If you name the foreign key column something else, define its name as follows:
 
 ```python
-from tenant import Tenant
 from ..helpers.model import Model
 
 class Apartment(Model):
@@ -159,7 +175,7 @@ class Apartment(Model):
   relations = {
     'tenant': {
       'type': 'hasOne',
-      'model': Tenant,
+      'model': 'Tenant',
       'foreign': 'unit_number'
     }
   }
@@ -167,7 +183,6 @@ class Apartment(Model):
 This type of relation allows you to define a `default` dictionary of key-value pairs to use in the event that result of the relationship query is `null`.
 
 ```python
-from tenant import Tenant
 from ..helpers.model import Model
 
 class Apartment(Model):
@@ -175,7 +190,7 @@ class Apartment(Model):
   relations = {
     'tenant': {
       'type': 'hasOne',
-      'model': Tenant,
+      'model': 'Tenant',
       'default': {
         'id': 0,
         'name': 'Vacant (No Tenant)',
@@ -191,8 +206,6 @@ Define this type of relation in exactly the same fashion as the `hasOne` relatio
 
 
 ```python
-from apartment import Apartment
-from parking_space import ParkingSpace
 from ..helpers.model import Model
 
 class User(Model):
@@ -200,11 +213,11 @@ class User(Model):
   relations = {
     'apartment': {
       'type': 'hasOne',
-      'model': Apartment,
+      'model': 'Apartment',
     },
     'parkingSpace': {
       'type': 'hasMany',
-      'model': ParkingSpace
+      'model': 'ParkingSpace'
     }
   }
 ```
@@ -214,7 +227,6 @@ class User(Model):
 This type of relation is the inverse of both the `hasOne` and `hasMany` types. Note that if you define a 'foreign' attribute it refers to the foreign key column name in the table referenced by the model that the relation is defined on (i.e. in the following example, the `id_of_tenant` column in the `parking_space` table). Also, if you wish an update to or deletion of this child model to update the timestamp of the parent model, add a `touch` class attribute to the child model with a list containing the names of the relationships to which that rule applies. This "touching" will not occur if a database record is deleted without a corresponding model being hydrated.
 
 ```python
-from tenant import Tenant 
 from ..helpers.model import Model 
 
 class ParkingSpace(Model):
@@ -223,7 +235,7 @@ class ParkingSpace(Model):
   relations = {
     'tenant': {
       'type': 'belongsTo',
-      'model': Tenant,
+      'model': 'Tenant',
       'foreign': 'id_of_tenant'
     }
   }
@@ -232,7 +244,6 @@ class ParkingSpace(Model):
 Like the `hasOne` relationship, you can define a `default` dictionary of key-value pairs to use in lieu of a real database record when the relation turns up `null`.
 
 ```python
-from tenant import Tenant 
 from ..helpers.model import Model 
 
 class ParkingSpace(Model):
@@ -241,7 +252,7 @@ class ParkingSpace(Model):
   relations = {
     'tenant': {
       'type': 'belongsTo',
-      'model': Tenant,
+      'model': 'Tenant',
       'default': {
         'id': '0',
         'description': 'Guest Parking Space'
@@ -255,25 +266,21 @@ class ParkingSpace(Model):
 This type is used in defining both sides of a many-to-many relationship. Also, like the `belongsTo` relationship type, you can define a `touch` attribute on the class to indicate you want the related model to have its timestamp updated when this model is updated. With this type of relationship, the timestamp touching rule can go one way or both ways (or neither at all of course if you don't define it in either model).
 
 ```python
-from course import Course
 from ..helpers.model import Model
-from schedule import Schedule
 
 class Student(Model):
   table = 'student'
   relations = {
     'Courses': {
       'type': 'belongsToMany',
-      'model': Course,
-      'pivot': Schedule
+      'model': 'Course',
+      'pivot': 'Schedule'
     }
   }
 ```
 
 ```python
-from student import Student 
-from..helpers.model import Model 
-from schedule import Schedule
+from..helpers.model import Model
 
 class Course(Model):
   table = 'course'
@@ -281,35 +288,31 @@ class Course(Model):
   relations = {
     'students': {
       'type': 'belongsToMany',
-      'model': Student,
-      'pivot': Schedule
+      'model': 'Student',
+      'pivot': 'Schedule'
     }
   }
 ```
 
-In the `Courses` relationship below, the `foreign` key is the column name in the pivot table (whose model in this case is `Schedule`) that contains `id`s of records in the `course` table. The `local` key refers to the column in the pivot table that contains `id`s of records in the `student` table.
+In the `courses` relationship below, the `foreign` key is the column name in the pivot table (whose model in this case is `Schedule`) that contains `id`s of records in the `course` table. The `local` key refers to the column in the pivot table that contains `id`s of records in the `student` table.
 
 ```python
-from course import Course
-from schedule import Schedule
 from ..helpers.model import Model
 
 class Student(Model):
   table = 'student'
   relations = {
-    'Courses': {
+    'courses': {
       'type': 'belongsToMany',
-      'model': Course,
+      'model': 'Course',
       'foreign': 'id_of_course',
       'local': 'id_of_student',
-      'pivot': Schedule
+      'pivot': 'Schedule'
     }
   }
 ```
 
 ```python
-from student import Student 
-from schedule import Schedule
 from ..helpers.model import Model 
 
 class Course(Model):
@@ -318,10 +321,10 @@ class Course(Model):
   relations = {
     'students': {
       'type': 'belongsToMany',
-      'model': Student,
+      'model': 'Student',
       'foreign': 'id_of_student',
       'local': 'id_of_course',
-      'pivot': Schedule
+      'pivot': 'Schedule'
     }
   }
 ```
@@ -331,8 +334,6 @@ Pivot tables will not be inferred. You must explicitly define their existence wi
 In the event that you want to use timestamps for your pivot model, the `updated_at` timestamp in most cases won't ever be updated, even when a timestamp touch 'event' travels through the model. In order to directly access the pivot model, access it via the 'pivot' attribute on a model hydrated as a result of a relationship loading. From there you can update the timestamp as needed.
 
 ```python
-from student import Student 
-from course import Course 
 from ..helpers.model import Model 
 
 class Schedule(Model):
@@ -349,46 +350,39 @@ A polymorphic one-to-one relationship is a lot like the normal one-to-one relati
 
 The `morphOne` part of the relationship is the polymorphic equivalent of `hasOne`. The `morphTo` relationship is defined on the tricky model that can belong to multiple types of other models.
 
-In the case of a model defining one or more `morphTo` relations, you must also define a class member variable called `owners`. It should contain a dictionary whose keys are all the different strings found in its `able_type` column and whose values are the corresponding model classes.
+In the case of a model defining one or more `morphTo` relations, you must also define a class member variable called `owners`. It should contain a relevant list of keys from the model `_index.py` registry that found in the `able_type` column and whose values are the corresponding model classes.
 
 ```python
 from ..helpers.model import Model
-from comment import Comment
 
 class Post(Model):
   table = 'post'
   relations = {
     'comment': {
       'type': 'morphOne',
-      'model': Comment
+      'model': 'Comment'
     }
   }
 ```
 ```python
 from ..helpers.model import Model
-from comment import Comment
 
 class Video(Model):
   table = 'video'
   relations = {
     'comment': {
       'type': 'morphOne',
-      'model': Comment
+      'model': 'Comment'
     }
   }
 ```
 ```python
 from ..helpers.model import Model
-from post import Post 
-from video import Video 
 
 class Comment(Model):
   table = 'comment'
   touch = ('commentable',)
-  owners = {
-    'post': Post,
-    'video': Video 
-  }
+  owners = ('Post','Video')
   relations = {
     'commentable': {
       'type': 'morphTo'
@@ -411,39 +405,34 @@ For this you will need to define four models: `Post`, `Comment`, `Hashtag`, `Has
 
 ```python
 from ..helpers.model import Model
-from hashtag import Hashtag 
-from hashtagable import Hashtagable 
 
 class Post(Model):
   table = 'post'
   relations = {
     'hashtags': {
       'type': 'morphedByMany',
-      'model': Hashtag,
-      'pivot': Hashtagable
+      'model': 'Hashtag',
+      'pivot': 'Hashtagable'
     }
   }
 ```
 
 ```python
 from ..helpers.model import Model
-from hashtag import Hashtag 
-from hashtagable import Hashtagable 
 
 class Comment(Model):
   table = 'comment'
   relations = {
     'hashtags': {
       'type': 'morphedByMany',
-      'model': Hashtag,
-      'pivot': Hashtagable
+      'model': 'Hashtag',
+      'pivot': 'Hashtagable'
     }
   }
 ```
 
 ```python
 from ..helpers.model import model
-from hashtagable import Hashtagable
 
 class Hashtag(Model):
   table = 'hashtag'
@@ -451,34 +440,28 @@ class Hashtag(Model):
   relations = {
     'hashtagables': {
       'type': 'morphToMany',
-      'pivot': Hashtagable
+      'pivot': 'Hashtagable'
     }
   }
 ```
 
 ```python
 from ..helpers import Model
-from hashtag import Hashtag
-from comment import Comment 
-from post import Post 
 
 class Hashtagable(Model):
   table = 'hashtagable'
-  morphs = {
-    'comment': Comment,
-    'post': Post 
-  }
+  morphs = ('Comment','Post')
   relations = {
     'hashtag': {
       'type': 'poly',
-      'model': Hashtag
+      'model': 'Hashtag'
     }
   }
 ```
 
 It will be assumed, no matter what you named your pivot class, that it contains an `id` column, a column named after the table plus `_id` concatenated (i.e. `hashtagable_id`), a column named after the table plus `_type` concatenated (i.e. `hashtagable_type`), and a column named after the table of the model defining the `morphToMany` relationship with `_id` concatenated (i.e. `hashtag_id`). 
 
-Also note that the model playing the pivot role in a polymorphic many-to-many relationship (in this case `Hashtagable`) is expected to have a class member variable called `morphs` with a dictionary containing all the unique strings found its table's 'able_type' column as keys paired with their respective classes.
+Also note that the model playing the pivot role in a polymorphic many-to-many relationship (in this case `Hashtagable`) is expected to have a class member variable called `morphs` with a list containing all the `_index.py` registry keys found in its table's 'able_type' column.
 
 Finally, note that in the example above, if you have a hydrated `Hashtag` model and you load the `hashtagables` relation, the list of hydrated models assigned to the `hashtagables` may contain models of both the `Post` and `Comment` types. This may be counterintuitive if you were expecting it to literally load a list of hydrated `Hashtagable` models. 
 

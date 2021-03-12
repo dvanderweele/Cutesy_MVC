@@ -1,4 +1,4 @@
 from ..helpers.model import Model
 
 class Tagable(Model):
-	pass
+	table = 'tagable'

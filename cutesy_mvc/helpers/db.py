@@ -301,10 +301,10 @@ class Table:
 
   def find(self, id):
     self.__type = 'sel'
-    w = Where([{
+    w = {
       'type': 'single',
       'condition': ('id', '=', id)
-    }])
+    }
     if self.__conditions == None:
       self.__conditions = Where([])
     self.__conditions.prependCondition(w)

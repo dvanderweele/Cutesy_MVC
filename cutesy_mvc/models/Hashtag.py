@@ -1,4 +1,4 @@
 from ..helpers.model import Model
 
 class Hashtag(Model):
-	pass
+	table = 'hashtag'

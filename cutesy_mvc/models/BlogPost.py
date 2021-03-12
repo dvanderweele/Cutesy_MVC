@@ -1,4 +1,4 @@
 from ..helpers.model import Model
 
 class BlogPost(Model):
-	pass
+	table = 'blog_post'

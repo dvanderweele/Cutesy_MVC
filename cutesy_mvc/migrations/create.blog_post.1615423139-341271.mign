@@ -2,6 +2,7 @@ UP
 col~id~INTEGER PRIMARY KEY NOT NULL
 col~title~TEXT NOT NULL
 col~body~TEXT NOT NULL
+col~deleted_at~REAL
 timestamps
 DOWN
 drop-table

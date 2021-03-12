@@ -1,5 +1,63 @@
-from cutesy_mvc.models.user import User
+import os, sys
 from cutesy_mvc.helpers.db import Where, Table
+from cutesy_mvc.helpers import path, cutify
+from cutesy_mvc.models.Customer import Customer 
+from cutesy_mvc.models.Phone import Phone 
+
+# migration section
+
+olddb = path.appendFileToRootDir('default.db')
+if os.path.exists(olddb):
+    os.remove(olddb)
+
+cutify.handleCuteness('migrate')
+
+# seeding section 
+
+custs = []
+for i in range(0,4):
+    c = Customer()
+    c['name'] = f'Person_{i}'
+    c.save()
+    c.load('phone')
+    custs.append(c)
+for c in custs:
+    print()
+    print(c)
+    print(c['phone'])
+    p = Phone()
+    p['IMEI'] = 42 + c['id']
+    p['customer_id'] = c['id']
+    p.save()
+    p['IMEI'] += c['id']
+    p.save()
+    print(p.isSameModel(c['phone']))
+    c.load('phone')
+    print(c)
+    print(c['phone'])
+    p['IMEI'] += 1000
+    p.save()
+    print(p.isSameModel(c['phone']))
+    c.refresh()
+    print(p.isSameModel(c['phone']))
+    print(c['phone'])
+
+## SCHEMAS
+### customer 
+#### name/text* 
+### phone 
+#### IMEI/int*, customer_id/int 
+### blog_post 
+### comment 
+### student 
+### schedule 
+### course 
+### user 
+### image
+### video 
+### hashtag 
+### tag 
+### tagable 
 
 # testing Model class 
 
@@ -14,13 +72,16 @@ from cutesy_mvc.helpers.db import Where, Table
 
 # create model for each Table above 
 
-# methods tested
+# methods tested:
+## load (hasOne)
+## save (create, update)
+## refresh
+## isSameModel, isNotSameModel
 
 # methods to test:
 ## isDirty
 ## isClean
 ## hydrated
-## isSameModel, isNotSameModel
 ## trashed
 ## withTrashed
 ## onlyTrashed
@@ -29,7 +90,7 @@ from cutesy_mvc.helpers.db import Where, Table
 ## refresh
 ## find
 ## setLastPulled
-## save (create, update)
+## save (update)
 ## limit
 ## orderBy
 ## condition
@@ -41,8 +102,7 @@ from cutesy_mvc.helpers.db import Where, Table
 ## forceDelete 
 ## destroy 
 ## restore 
-## load (hasOne, hasMany, belongsTo, belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
+## load (hasMany, belongsTo, belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
 ## touchIfNeeded (as called by other methods)
 
 # to be implemented:
-## cutify tool for generating model boilerplate files
