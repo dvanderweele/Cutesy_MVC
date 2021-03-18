@@ -38,14 +38,6 @@ Pass in another model to either of these methods to determine if the models are 
 
 Even if you have mutated your model since it was hydrated from or pushed to the database, this method will return its original attributes.
 
-### `isDirty`
-
-Tells you if you've altered the model at all from the values that are returned by the `getOriginal` method.
-
-### `isClean`
-
-Returns the opposite boolean value of whatever is returned by `isDirty`.
-
 ### `hydrated`
 
 Tells you if all attributes that are not `nullable` have been filled.
@@ -60,7 +52,7 @@ Chainable method for queries to indicate the result set of models should include
 
 ### `onlyTrashed`
 
-Chainable method for queries indicating the result set of models should only invlude soft deleted models.
+Chainable method for queries indicating the result set of models should only include soft deleted models.
 
 ### `allModels`
 

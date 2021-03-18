@@ -2,14 +2,14 @@ from ..helpers import config, db, migrate, timestamp
 import collections
 
 def depInjector(name):
-    from ..models._index import registry
-    return registry[name]
+  from ..models._index import registry
+  return registry[name]
     
 def keyOfDep(dep):
-    from ..models._index import registry
-    for r in registry.items():
-        if r[1] == dep:
-            return r[0]
+  from ..models._index import registry
+  for r in registry.items():
+    if r[1] == dep:
+      return r[0]
 
 class Model:
   connection = config.get(f'db.list.{config.get("db.current")}')
@@ -54,25 +54,12 @@ class Model:
     self.__record[key] = newval
 
   def setOriginals(self, cols):
-    self.__originals = cols
+    self.__originals = {}
+    for c in cols.keys():
+      self.__originals[c] = cols[c]
     
   def getOriginal(self):
     return self.__originals 
-  
-  def isDirty(self, att = None):
-    dirty = False
-    if att != None:
-      if att in self.__lastPulled.keys() and self.__lastPulled[att] != self[att]:
-        return True
-    else:
-      for k in self.__class__.schema[self.__class__.table].keys():
-        if k in self.__lastPulled.keys() and self.__lastPulled[k] != self[k]:
-          dirty = True
-          break
-      return dirty 
-    
-  def isClean(self, att = None):
-    return not(self.isDirty(att))
     
   def hydrated(self):
     res = True 

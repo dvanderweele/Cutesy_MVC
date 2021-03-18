@@ -9,8 +9,8 @@ def appendDirToRootDir(path):
 def appendFileToRootDir(file):
   return os.path.join(getRootDir(),file)
 
-def appendDirToDir(dir, path):
-  return os.path.join(dir,path,'')
+def appendDirToDir(dr, path):
+  return os.path.join(dr,path,'')
 
-def appendFileToDir(dir, file):
-  return os.path.join(dir,file)
+def appendFileToDir(dr, file):
+  return os.path.join(dr,file)

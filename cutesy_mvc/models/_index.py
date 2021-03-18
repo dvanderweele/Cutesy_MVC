@@ -13,17 +13,17 @@ from .User import User
 from .Video import Video
 
 registry = {
-    'BlogPost': BlogPost,
-    'Comment': Comment,
-    'Course': Course,
-    'Customer': Customer,
-    'Hashtag': Hashtag,
-    'Image': Image,
-    'Phone': Phone,
-    'Schedule': Schedule,
-    'Student': Student,
-    'Tag': Tag,
-    'Tagable': Tagable,
-    'User': User,
-    'Video': Video
+  'BlogPost': BlogPost,
+  'Comment': Comment,
+  'Course': Course,
+  'Customer': Customer,
+  'Hashtag': Hashtag,
+  'Image': Image,
+  'Phone': Phone,
+  'Schedule': Schedule,
+  'Student': Student,
+  'Tag': Tag,
+  'Tagable': Tagable,
+  'User': User,
+  'Video': Video
 }
