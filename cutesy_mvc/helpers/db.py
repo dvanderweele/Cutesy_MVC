@@ -111,9 +111,19 @@ class Where:
     self.__params = []
     self.__parsed = False
   
+  def __str__(self):
+  	self.parse()
+  	res = f'WHERE OBJECT:\nCondition String: {self.__string}\nParameters: '
+  	for i in range(0,len(self.__params)):
+  		res += str(self.__params[i])
+  		if i < len(self.__params) - 1:
+  			res += '; '
+  	return res
+  
   def parse(self):
     if not self.__parsed:
-      self.__string = self.__buildConditionString()
+    	self.__string = self.__buildConditionString()
+    	self.__parsed = True
     
   def __buildConditionString(self):
     res = 'WHERE '

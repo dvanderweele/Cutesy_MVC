@@ -72,18 +72,20 @@ class Model:
   def __processTrashCondition(self):
     if self.__class__.softDeletes:
       tc = {'type':'single'}
+      
       if self.__onlyTrashed:
-        tc['condition'] = ('deleted_at', '<>', 'NULL')
+        tc['condition'] = ('deleted_at', 'IS NOT', None)
       elif not(self.__includeTrashed):
-        tc['condition'] = ('deleted_at', '=', 'NULL')
+        tc['condition'] = ('deleted_at', 'IS', None)
       else:
-        tc['condition'] = None
+      	tc['condition'] = None
+        
       if self.__conditions != None:
         if tc['condition'] != None:
           self.__conditions.prependCondition(tc)
       else:
         if tc['condition'] != None:
-          self.__conditions = db.Where([tc])
+          self.__conditions = db.Where([tc,])
       if self.__conditions != None:
         self.__conditions.parse()
           
@@ -103,11 +105,11 @@ class Model:
     
   def allModels(self):
     res = None
-    if not self.__class__.softDeletes or self.__includeTrashed:
-      res = db.Table(self.__class__.table).setConnection(self.__class__.connection).get()
-    else:
-      self.__processTrashCondition()
-      res = db.Table(self.__class__.table).setConnection(self.__class__.connection).conditions(self.__conditions).get()
+    self.__processTrashCondition()
+    res = db.Table(self.__class__.table).setConnection(self.__class__.connection)
+    if self.__conditions != None:
+    	res = res.conditions(self.__conditions)
+    res = res.get()
     out = []
     for r in res:
       m = self.__class__(r)
@@ -123,7 +125,6 @@ class Model:
       
   def refresh(self):
     self.fresh()
-    print(self.__loadedRelations)
     for r in self.__loadedRelations:
       self.load(r, False)
 

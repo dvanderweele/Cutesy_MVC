@@ -77,6 +77,42 @@ b3.save()
 posts = BlogPost().allModels()
 for p in posts:
   print(p)
+  
+posts[2].delete()
+print('soft deleted models')
+dead = BlogPost().onlyTrashed().allModels()
+for d in dead:
+  print(d)
+print('still undeleted models')
+alive = BlogPost().allModels()
+for a in alive:
+  print(a)
+alive[0].forceDelete()
+print('force deleted a living model...')
+left = BlogPost().withTrashed().allModels()
+for l in left:
+  print(l)
+  if l.trashed():
+    l.restore()
+
+print('restored deleted model')
+last = BlogPost().allModels()
+for l in last:
+  print(l)
+  
+more = BlogPost().allModels()
+more[0]['title'] = 'haha fake title'
+more[0].save()
+print('more...')
+for m in more:
+	print(m)
+print('left before and after')
+for l in left:
+	print('l before fresh')
+	print(l)
+	l.fresh()
+	print('l after fresh')
+	print(l)
 
 ## SCHEMAS
 ### customer 
@@ -117,13 +153,14 @@ for p in posts:
 ## isSameModel, isNotSameModel
 ## hydrated 
 ## allModels 
-## delete (hard)
+## delete (hard, soft)
+## withTrashed 
+## onlyTrashed
+## trashed 
+## restore 
+## fresh 
 
 # methods to test:
-## trashed
-## withTrashed
-## onlyTrashed
-## fresh 
 ## find
 ## setLastPulled
 ## limit
@@ -133,11 +170,6 @@ for p in posts:
 ## get 
 ## chunk 
 ## chunkById
-## delete (soft)
-## forceDelete 
 ## destroy 
-## restore 
 ## load (hasMany, belongsTo, belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
 ## touchIfNeeded (as called by other methods)
-
-# to be implemented:

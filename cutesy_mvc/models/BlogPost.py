@@ -10,4 +10,4 @@ class BlogPost(Model):
     }
   }
   def __str__(self):
-    return f'Title: {self["title"]} *** Body: {self["body"]}'
+    return f'id: {self["id"]} *** Title: {self["title"]} *** Body: {self["body"]} *** Deleted_at: {str(self["deleted_at"])}'
