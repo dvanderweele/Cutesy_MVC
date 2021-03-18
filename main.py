@@ -113,7 +113,24 @@ for l in left:
 	l.fresh()
 	print('l after fresh')
 	print(l)
+	
+BlogPost().destroy(3)
 
+blags = BlogPost().withTrashed().allModels()
+print('printing all after destroy id 3')
+for b in blags:
+  print(b)
+  
+ltest = BlogPost().limit(1).withTrashed().get()
+print('test limit and get')
+for l in ltest:
+  print(l)
+  
+
+ft = BlogPost().find(3)
+print(ft)
+
+  
 ## SCHEMAS
 ### customer 
 #### name/text* 
@@ -147,29 +164,30 @@ for l in left:
 # create model for each Table above 
 
 # methods tested:
-## load (hasOne)
-## save (create, update)
-## refresh
-## isSameModel, isNotSameModel
+## load (hasOne) 
+## save (create, update) 
+## refresh 
+## isSameModel, isNotSameModel 
 ## hydrated 
 ## allModels 
-## delete (hard, soft)
-## withTrashed 
-## onlyTrashed
+## delete (hard, soft) 
+## withTrashed
+## onlyTrashed 
 ## trashed 
 ## restore 
 ## fresh 
+## destroy (soft) 
+## limit
+## get
 
 # methods to test:
-## find
-## setLastPulled
-## limit
-## orderBy
-## condition
+## find 
+## setLastPulled 
+## orderBy 
+## condition 
 ## conditions 
-## get 
 ## chunk 
 ## chunkById
-## destroy 
+## destroy (hard)
 ## load (hasMany, belongsTo, belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
 ## touchIfNeeded (as called by other methods)

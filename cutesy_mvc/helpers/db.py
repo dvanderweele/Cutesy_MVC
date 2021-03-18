@@ -122,13 +122,14 @@ class Where:
   
   def parse(self):
     if not self.__parsed:
-    	self.__string = self.__buildConditionString()
-    	self.__parsed = True
+      self.__string = self.__buildConditionString()
+      self.__parsed = True
     
   def __buildConditionString(self):
     res = 'WHERE '
+    self.__params = []
     for i in range(0, len(self.__conditions)):
-      res += self.__processConditionRecord(self.__conditions[i], i)
+    	res += self.__processConditionRecord(self.__conditions[i], i)
     return res
     
   def getConditionString(self):
@@ -141,7 +142,8 @@ class Where:
     self.__parsed = False 
     self.__conditions.insert(0,conditionDict)
     if len(self.__conditions) > 1:
-      self.__conditions[1]['operator'] = operator 
+      self.__conditions[1]['operator'] = operator
+    self.parse()
         
   def setCondition(self, index, conditionDict):
     self.__parsed = False

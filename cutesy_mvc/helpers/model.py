@@ -130,7 +130,10 @@ class Model:
 
   def find(self, id):
     self.__processTrashCondition()
-    res = db.Table(self.__class__.table).setConnection(self.__class__.connection).conditions(self.__conditions).find(id)
+    res = db.Table(self.__class__.table).setConnection(self.__class__.connection)
+    if self.__conditions != None:
+      res = res.conditions(self.__conditions)
+    res = res.find(id)
     if len(res) > 0:
       m = self.__class__(res[0])
       m.setLastPulled(res[0])
