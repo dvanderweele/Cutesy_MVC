@@ -1,3 +1,4 @@
+import os 
 from cutesy_mvc.helpers.db import Where, Table
 from cutesy_mvc.helpers import path, cutify
 from cutesy_mvc.models.Customer import Customer
@@ -170,6 +171,20 @@ Student().destroy(2)
 rs = Student().withTrashed().allModels()
 for r in rs: 
 	print(r)
+
+bs = BlogPost().onlyTrashed().get()
+bs[0].restore()
+bs = BlogPost().allModels()
+for b in bs:
+	print(b)
+	
+c = Comment()
+c['body'] = 'All hail our lord lorem ipsum, dolor sit amet.'
+c['blog_post_id'] = 2 
+c.save()
+c = Comment()
+c['body'] = 'Praise be unto lorem ipsum, our lord, from now unto the very end of the age.'
+c['blog_post_id'] = 2
 
 ## SCHEMAS
 ### customer 
