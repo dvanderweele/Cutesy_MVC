@@ -1,4 +1,3 @@
-import os, sys
 from cutesy_mvc.helpers.db import Where, Table
 from cutesy_mvc.helpers import path, cutify
 from cutesy_mvc.models.Customer import Customer
@@ -230,4 +229,4 @@ for r in rs:
 ## chunk 
 ## chunkById
 ## load (hasMany, belongsTo, belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
-## touchIfNeeded (as called by other methods)
+## touchIfNeeded

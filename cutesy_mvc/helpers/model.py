@@ -242,7 +242,7 @@ class Model:
       if not cb(m):
         discontinue = True
     while len(res) > 0 and not(discontinue):
-      offset += size + 1
+      offset += size
       statement = f'SELECT * FROM {self.__class__.table}'
       params = []
       statement += ' '
