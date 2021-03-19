@@ -5,6 +5,7 @@ from cutesy_mvc.models.Customer import Customer
 from cutesy_mvc.models.Phone import Phone
 from cutesy_mvc.models.BlogPost import BlogPost
 from cutesy_mvc.models.Comment import Comment
+from cutesy_mvc.models.Student import Student 
 from cutesy_mvc.models.Hashtag import Hashtag 
 
 # migration section
@@ -125,12 +126,52 @@ ltest = BlogPost().limit(1).withTrashed().get()
 print('test limit and get')
 for l in ltest:
   print(l)
-  
 
 ft = BlogPost().find(3)
 print(ft)
+tt = BlogPost().withTrashed().find(3)
+print(tt)
 
-  
+a1 = Student()
+a1['name'] = 'Rocky'
+a1['dob'] = '16 March 1946'
+a1.save()
+
+a2 = Student()
+a2['name'] = 'Bullwinkle'
+a2['dob'] = '17 April 1945'
+a2.save()
+
+a3 = Student()
+a3['name'] = 'Yogi Bear'
+a3['dob'] = '24 August 1947'
+a3.save()
+
+ss = Student().condition('name','<>','Rocky').orderBy('dob', 'd').get()
+
+for d in ss:
+	print(d)
+	
+rb = Where([
+	{
+		'type': 'single',
+		'condition': ('name', '=', 'Rocky')
+	},
+	{
+		'type': 'single',
+		'operator': 'OR',
+		'condition': ('name', '=', 'Bullwinkle')
+	}
+])
+
+ast = Student().conditions(rb).get()
+for a in ast:
+	print(a)
+Student().destroy(2)
+rs = Student().withTrashed().allModels()
+for r in rs: 
+	print(r)
+
 ## SCHEMAS
 ### customer 
 #### name/text* 
@@ -140,7 +181,8 @@ print(ft)
 #### title/text*, body/text*, deleted_at/real
 ### comment 
 #### body/text*, blog_post_id/int*
-### student 
+### student
+#### name/text*, dob/text*
 ### schedule 
 ### course 
 ### user 
@@ -176,18 +218,16 @@ print(ft)
 ## trashed 
 ## restore 
 ## fresh 
-## destroy (soft) 
+## destroy (soft, hard) 
 ## limit
 ## get
+## find 
+## orderBy
+## condition 
+## conditions
 
 # methods to test:
-## find 
-## setLastPulled 
-## orderBy 
-## condition 
-## conditions 
 ## chunk 
 ## chunkById
-## destroy (hard)
 ## load (hasMany, belongsTo, belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
 ## touchIfNeeded (as called by other methods)
