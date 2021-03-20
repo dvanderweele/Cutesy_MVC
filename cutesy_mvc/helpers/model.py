@@ -69,8 +69,26 @@ class Model:
         break
     return res
 
-  def __processTrashCondition(self):
-    if self.__class__.softDeletes:
+  def __processTrashCondition(self, relation = None):
+    if relation == None and self.__class__.softDeletes:
+      tc = {'type':'single'}
+      
+      if self.__onlyTrashed:
+        tc['condition'] = ('deleted_at', 'IS NOT', None)
+      elif not(self.__includeTrashed):
+        tc['condition'] = ('deleted_at', 'IS', None)
+      else:
+      	tc['condition'] = None
+        
+      if self.__conditions != None:
+        if tc['condition'] != None:
+          self.__conditions.prependCondition(tc)
+      else:
+        if tc['condition'] != None:
+          self.__conditions = db.Where([tc,])
+      if self.__conditions != None:
+        self.__conditions.parse()
+    elif relation != None and relation.softDeletes:
       tc = {'type':'single'}
       
       if self.__onlyTrashed:
@@ -386,7 +404,7 @@ class Model:
     if 'foreign' in r.keys():
       foreign = r['foreign']
     self.__conditions = db.Where([{'type':'single','condition':(foreign,'=',self['id'])}])
-    self.__processTrashCondition()
+    self.__processTrashCondition(model)
     q = db.Table(model.table).setConnection(model.connection).limit(1).conditions(self.__conditions)
     if len(self.__ordering) > 0:
       for o in self.__ordering:
@@ -414,7 +432,7 @@ class Model:
     if 'foreign' in r.keys():
       foreign = r['foreign']
     self.__conditions = db.Where([{'type':'single','condition':(foreign,'=',self['id'])}])
-    self.__processTrashCondition()
+    self.__processTrashCondition(model)
     q = db.Table(model.table).setConnection(model.connection).conditions(self.__conditions)
     if self.__limit != None:
       q = q.limit(self.__limit)

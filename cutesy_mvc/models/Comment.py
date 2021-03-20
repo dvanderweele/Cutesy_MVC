@@ -8,3 +8,5 @@ class Comment(Model):
 	    'model': 'BlogPost'
 	  }
 	}
+	def __str__(self):
+		return f'Comment: id {self["id"]} *** body {self["body"]}'

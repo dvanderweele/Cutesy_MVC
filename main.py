@@ -185,6 +185,17 @@ c.save()
 c = Comment()
 c['body'] = 'Praise be unto lorem ipsum, our lord, from now unto the very end of the age.'
 c['blog_post_id'] = 2
+c.save()
+
+b = BlogPost().find(2)
+b.load('comments')
+for c in b['comments']:
+	print(c)
+
+btc = Comment().find(1)
+btc.load('blogPost')
+print(btc)
+print(btc['blogPost'])
 
 ## SCHEMAS
 ### customer 
@@ -220,7 +231,7 @@ c['blog_post_id'] = 2
 # create model for each Table above 
 
 # methods tested:
-## load (hasOne) 
+## load (hasOne, hasMany, belongsTo) 
 ## save (create, update) 
 ## refresh 
 ## isSameModel, isNotSameModel 
@@ -239,9 +250,9 @@ c['blog_post_id'] = 2
 ## orderBy
 ## condition 
 ## conditions
-
-# methods to test:
 ## chunk 
 ## chunkById
-## load (hasMany, belongsTo, belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
+
+# methods to test:
+## load (belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
 ## touchIfNeeded
