@@ -7,6 +7,10 @@ class BlogPost(Model):
     'comments': {
       'type': 'hasMany',
       'model': 'Comment'
+    },
+    'image': {
+    	'type': 'morphOne',
+    	'model': 'Image'
     }
   }
   def __str__(self):

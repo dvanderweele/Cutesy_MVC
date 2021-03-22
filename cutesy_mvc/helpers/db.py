@@ -159,7 +159,7 @@ class Where:
         res+='('
         for i in range(0,len(rec['condition'][2])):
           res+= '?'
-          self.__params.append(rec['condition'][2])
+          self.__params.append(rec['condition'][2][i])
           if i < len(rec['condition'][2]) - 1:
             res+=', '
         res+=')'

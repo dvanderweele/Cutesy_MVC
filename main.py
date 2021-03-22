@@ -6,6 +6,10 @@ from cutesy_mvc.models.Phone import Phone
 from cutesy_mvc.models.BlogPost import BlogPost
 from cutesy_mvc.models.Comment import Comment
 from cutesy_mvc.models.Student import Student 
+from cutesy_mvc.models.Schedule import Schedule
+from cutesy_mvc.models.Course import Course
+from cutesy_mvc.models.User import User 
+from cutesy_mvc.models.Image import Image 
 from cutesy_mvc.models.Hashtag import Hashtag 
 
 # migration section
@@ -197,6 +201,82 @@ btc.load('blogPost')
 print(btc)
 print(btc['blogPost'])
 
+print('belongsToMany Test')
+
+s = Student().allModels()
+for p in s:
+	print(p)
+
+cs = Course()
+cs['title'] = 'discrete math'
+cs.save()
+eng = Course()
+eng['title'] = 'composition'
+eng.save()
+
+for x in [a for a in Course().allModels()]:
+	print(x)
+	
+s = Schedule()
+s['student_id'] = 1 
+s['course_id'] = 1 
+s.save()
+s = Schedule()
+s['student_id'] = 1 
+s['course_id'] = 2
+s.save()
+s = Schedule()
+s['student_id'] = 3 
+s['course_id'] = 1
+s.save()
+
+print('courses of student 1')
+stud = Student().find(1)
+stud.load('courses')
+for c in stud['courses']:
+	print(c)
+	
+print('students of course 1')
+crs = Course().find(1)
+crs.load('students')
+for s in crs['students']:
+	print(s)
+
+print('morphone morphto tests')
+
+print('blog_posts:')
+posts = BlogPost().allModels()
+for p in posts:
+	print(p)
+	
+print('seeding users')
+u = User()
+u['name'] = "Jeffrey"
+u.save()
+u = User()
+u['name'] = "Jackson"
+u.save()
+
+print('seeding images')
+pic = Image()
+pic['URL'] = 'https://arachni.dev/logo.gif'
+pic['alt'] = 'ArachniDev LLC URL'
+pic['imageable_type'] = 'User'
+pic['imageable_id'] = 1 
+pic.save()
+pic = Image()
+pic['URL'] = 'https://arachni.dev/post1.jpg'
+pic['imageable_type'] = 'BlogPost'
+pic['imageable_id'] = 2
+pic.save()
+
+print('images')
+imgs = Image().allModels()
+for i in imgs:
+	print(i)
+	i.load('imageable')
+	print(i['imageable'])
+
 ## SCHEMAS
 ### customer 
 #### name/text* 
@@ -209,9 +289,13 @@ print(btc['blogPost'])
 ### student
 #### name/text*, dob/text*
 ### schedule 
+#### student_id/int*, course_id/int*
 ### course 
+#### title/text*, description/text
 ### user 
+#### name/text* 
 ### image
+#### URL/text*, alt/text, imageable_id/int, imageable_type/text 
 ### video 
 ### hashtag 
 ### tag 

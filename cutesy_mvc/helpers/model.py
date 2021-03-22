@@ -485,7 +485,7 @@ class Model:
     local = self.__class__.table + '_id' 
     if 'local' in r.keys():
       local = r['local']
-    mids = [r[foreign] for r in db.Table(pivot.__class__.table).setConnection(pivot.connection).columns((foreign,)).condition(local, '=', self['id']).get()]
+    mids = [r[foreign] for r in db.Table(pivot.table).setConnection(pivot.connection).columns((foreign,)).condition(local, '=', self['id']).get()]
     res = None
     if len(mids) < 1:
       res = []
@@ -501,8 +501,8 @@ class Model:
         m = model(r)
         m.setOriginals(r)
         pr = db.Table(pivot.table).setConnection(pivot.connection).conditions(db.Where([{'type':'single','condition':(foreign, '=', m['id'])},{'type':'single','operator':'AND','condition':(local, '=', self['id'])}])).first()
-        p = pivot(pr)
-        p.setOriginals(pr)
+        p = pivot(pr[0])
+        p.setOriginals(pr[0])
         m['pivot'] = p
         rel.append(m)
       self[name] = rel 
@@ -541,18 +541,17 @@ class Model:
   
   def __morphTo(self, name):
     r = self.__class__.relations[name]
-    model = depInjector(r['model'])
     able_id = self.__class__.table + 'able_id'
     able_type = self.__class__.table + 'able_type'
-    if able_type not in self.__class__.owners.keys():
+    if self[able_type] not in self.__class__.owners:
       self[name] = None 
     else:
-      rt = self.__class__.owners[able_type]
-      res = db.Table(rt.__class__.table).setConnection(rt.__class__.connection).condition('id','=',self[able_id]).first()
+      rt = depInjector(self[able_type])
+      res = db.Table(rt.table).setConnection(rt.connection).condition('id','=',self[able_id]).first()
       loaded = False
       if len(res) < 1:
         if 'default' in r.keys():
-          m = model(r['default'])
+          m = rt(r['default'])
           m.setOriginals(r['default'])
           self[name] = m
         else: 

@@ -342,7 +342,7 @@ A polymorphic one-to-one relationship is a lot like the normal one-to-one relati
 
 The `morphOne` part of the relationship is the polymorphic equivalent of `hasOne`. The `morphTo` relationship is defined on the tricky model that can belong to multiple types of other models.
 
-In the case of a model defining one or more `morphTo` relations, you must also define a class member variable called `owners`. It should contain a relevant list of keys from the model `_index.py` registry that found in the `able_type` column and whose values are the corresponding model classes.
+In the case of a model defining one or more `morphTo` relations, you must also define a class member variable called `owners`. It should contain a relevant list of keys from the model `_index.py` registry that are found in the `able_type` column and whose values are the corresponding model classes.
 
 ```python
 from ..helpers.model import Model
