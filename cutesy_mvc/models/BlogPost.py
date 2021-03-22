@@ -11,6 +11,10 @@ class BlogPost(Model):
     'image': {
     	'type': 'morphOne',
     	'model': 'Image'
+    },
+    'hashtags': {
+    	'type': 'morphMany',
+    	'model': 'Hashtag'
     }
   }
   def __str__(self):

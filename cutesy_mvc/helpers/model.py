@@ -566,19 +566,19 @@ class Model:
   def __morphMany(self, name):
     r = self.__class__.relations[name]
     model = depInjector(r['model'])
-    able_id = model.__class__.table + 'able_id'
-    able_type = model.__class__.table + 'able_type'
+    able_id = model.table + 'able_id'
+    able_type = model.table + 'able_type'
     owner_string = None
-    for p in model.__class__.owners.items():
-      if p[1] == self.__class__:
-        owner_string = p[0]
+    for p in model.owners:
+      if p == keyOfDep(self.__class__):
+        owner_string = p
         break 
     if owner_string == None:
       self[name] = None 
     else:
       c = db.Where([{'type':'series','series':[{'type':'single','condition':(able_id,'=',self['id'])},{'type':'single','operator':'AND','condition':(able_type,'=',owner_string)}]}])
       c.parse()
-      res = db.Table(model.__class__.table).setConnection(model.__class__.connection).conditions(c).get()
+      res = db.Table(model.table).setConnection(model.connection).conditions(c).get()
       loaded = False
       if len(res) < 1:
         self[name] = None 
@@ -586,7 +586,7 @@ class Model:
         loaded = True
         rel = []
         for rec in res:
-          m = model.__class__(rec)
+          m = model(rec)
           m.setOriginals(rec)
           rel.append(m)
         self[name] = rel 

@@ -10,6 +10,7 @@ from cutesy_mvc.models.Schedule import Schedule
 from cutesy_mvc.models.Course import Course
 from cutesy_mvc.models.User import User 
 from cutesy_mvc.models.Image import Image 
+from cutesy_mvc.models.Video import Video 
 from cutesy_mvc.models.Hashtag import Hashtag 
 
 # migration section
@@ -286,6 +287,49 @@ us = User().find(1)
 us.load('image')
 print(us['image'])
 
+print('morphMany morphTo tests')
+
+v = Video()
+v['title'] = 'complaint log 257'
+v['url'] = 'https://y.tube/ddgg332da'
+v['description'] = 'lorem loren loren yeah'
+v.save()
+v = Video()
+v['title'] = 'a pirate song'
+v['url'] = 'https://y.tube/kfkfidjsjsn'
+v['description'] = 'hi ho hi ho hi ho'
+v.save()
+
+h = Hashtag()
+h['tag'] = 'yolo'
+h['hashtagable_type'] = 'Video'
+h['hashtagable_id'] = 1
+h.save()
+h = Hashtag()
+h['tag'] = 'ughh'
+h['hashtagable_type'] ='Video'
+h['hashtagable_id'] = 2 
+h.save()
+h = Hashtag()
+h['tag'] = 'diy'
+h['hashtagable_type'] = 'BlogPost'
+h['hashtagable_id'] = 2 
+h.save()
+
+bp = BlogPost().find(2)
+bp.load('hashtags')
+print(bp['hashtags'][0])
+vs = Video().allModels()
+for v in vs:
+	v.load('hashtags')
+	for h in v['hashtags']:
+		print(h)
+
+tags = Hashtag().allModels()
+for h in tags:
+	h.load('hashtagable')
+	print(h['hashtagable'])
+
 ## SCHEMAS
 ### customer 
 #### name/text* 
@@ -306,7 +350,9 @@ print(us['image'])
 ### image
 #### URL/text*, alt/text, imageable_id/int, imageable_type/text 
 ### video 
+#### title/text*, url/text*, description/text 
 ### hashtag 
+#### tag/text*, hashtagable_type/text, hashtagable_id/int 
 ### tag 
 ### tagable 
 
