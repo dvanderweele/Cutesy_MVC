@@ -15,6 +15,11 @@ class BlogPost(Model):
     'hashtags': {
     	'type': 'morphMany',
     	'model': 'Hashtag'
+    },
+    'tags': {
+    	'type': 'morphedByMany',
+    	'model': 'Tag',
+    	'pivot': 'Tagable'
     }
   }
   def __str__(self):

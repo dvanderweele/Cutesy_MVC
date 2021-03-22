@@ -597,23 +597,23 @@ class Model:
     r = self.__class__.relations[name]
     pivot = depInjector(r['pivot'])
     foreign = self.__class__.table + '_id'
-    pivs = db.Table(pivot.__class__.table).setConnection(pivot.__class__.connection).condition(foreign,'=',self['id']).get()
+    pivs = db.Table(pivot.table).setConnection(pivot.connection).condition(foreign,'=',self['id']).get()
     loaded = False
     if len(pivs) < 1:
       self[name] = None 
     else:
       rel = []
-      able_id = pivot.__class__.table + '_id'
-      able_type = pivot.__class__.table + '_type'
+      able_id = pivot.table + '_id'
+      able_type = pivot.table + '_type'
       for p in pivs:
-        if p[able_type] in pivot.__class__.morphs.keys():
-          m = depInjector(pivot.__class__.morphs[able_type])
+        if p[able_type] in pivot.morphs:
+          m = depInjector(p[able_type])
           i = p[able_id]
-          res = db.Table(m.__class__.table).setConnection(m.__class__.connection).condition('id','=',i).first()
+          res = db.Table(m.table).setConnection(m.connection).condition('id','=',i).first()
           if len(res) > 0:
             o = m(res[0])
             o.setOriginals(res[0])
-            rel.append[o]
+            rel.append(o)
       if len(rel) < 1:
         self[name] = None 
       else: 
@@ -627,21 +627,21 @@ class Model:
     model = depInjector(r['model'])
     pivot = depInjector(r['pivot'])
     owner_string = None
-    for p in model.__class__.owners.items():
-      if p[1] == self.__class__:
-        owner_string = p[0]
+    for p in pivot.morphs:
+      if p == keyOfDep(self.__class__):
+        owner_string = p
         break 
     if owner_string == None:
       self[name] = None 
     else:
-      c = db.Where([{'type':'series','series':[{'type':'single','condition':(pivot.__class__.table + 'able_id','=',self['id'])},{'type':'single','operator':'AND','condition':(pivot.__class__.table + 'able_type','=',owner_string)}]}])
+      c = db.Where([{'type':'series','series':[{'type':'single','condition':(pivot.table + '_id','=',self['id'])},{'type':'single','operator':'AND','condition':(pivot.table + '_type','=',owner_string)}]}])
       c.parse()
-    mids = [k[model.__class__.table + '_id'] for k in db.Table(pivot.__class__.table).setConnection(pivot.__class__.connection).columns((model.__class__.table + '_id',)).conditions(c).get()]
+    mids = [k[model.table + '_id'] for k in db.Table(pivot.table).setConnection(pivot.connection).columns((model.table + '_id',)).conditions(c).get()]
     loaded = False
     if len(mids) < 1:
       self[name] = None 
     else:
-      res = db.Table(model.__class__.table).setConnection(model.__class__.connection).condition('id', 'IN', mids).get()
+      res = db.Table(model.table).setConnection(model.connection).condition('id', 'IN', mids).get()
       if len(res) < 1:
         self[name] = None 
       else:
@@ -649,7 +649,7 @@ class Model:
         rel = []
         for rec in res:
           m = model(rec)
-          m.setOriginals(m)
+          m.setOriginals(rec)
           rel.append(m)
         self[name] = rel 
       return loaded

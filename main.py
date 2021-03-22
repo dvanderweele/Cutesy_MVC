@@ -12,6 +12,8 @@ from cutesy_mvc.models.User import User
 from cutesy_mvc.models.Image import Image 
 from cutesy_mvc.models.Video import Video 
 from cutesy_mvc.models.Hashtag import Hashtag 
+from cutesy_mvc.models.Tag import Tag 
+from cutesy_mvc.models.Tagable import Tagable 
 
 # migration section
 
@@ -329,7 +331,57 @@ tags = Hashtag().allModels()
 for h in tags:
 	h.load('hashtagable')
 	print(h['hashtagable'])
+	
+print('morphToMany & morphedByMany')
 
+b = BlogPost().find(2)
+print(b)
+c = BlogPost().find(3)
+print(c)
+v = Video().find(1)
+w = Video().find(2)
+print(v)
+print(w)
+
+t = Tag()
+t['name'] = 'updates'
+t.save()
+tt = Tag()
+tt['name'] = 'rantings'
+tt.save()
+ttt=Tag()
+ttt['name'] = 'ravings'
+ttt.save()
+
+p = Tagable()
+p['tag_id'] = 1 
+p['tagable_id'] = 2 
+p['tagable_type'] = 'BlogPost'
+p.save()
+p = Tagable()
+p['tag_id'] = 2
+p['tagable_id'] = 2 
+p['tagable_type'] = 'BlogPost'
+p.save()
+p = Tagable()
+p['tag_id'] = 3
+p['tagable_id'] = 1
+p['tagable_type'] = 'Video'
+p.save()
+
+b.load('tags')
+for tag in b['tags']:
+	print(tag)
+	tag.load('tagables')
+	for t in tag["tagables"]:
+		print(f'Tagable {t}')
+v.load('tags')
+for tag in v['tags']:
+	print(tag)
+	tag.load('tagables')
+	for t in tag["tagables"]:
+		print(f'Tagable {t}')
+	
 ## SCHEMAS
 ### customer 
 #### name/text* 
@@ -354,7 +406,9 @@ for h in tags:
 ### hashtag 
 #### tag/text*, hashtagable_type/text, hashtagable_id/int 
 ### tag 
+#### name/text*
 ### tagable 
+#### tag_id/int*, tagable_id/int*, tagable_type/text*
 
 # testing Model class 
 
@@ -393,5 +447,5 @@ for h in tags:
 ## chunkById
 
 # methods to test:
-## load (belongsToMany, morphOne, morphMany, morphTo, morphToMany, morphedByMany)
+## load (morphToMany, morphedByMany)
 ## touchIfNeeded
