@@ -514,16 +514,16 @@ class Model:
     able_id = model.table + 'able_id'
     able_type = model.table + 'able_type'
     owner_string = None
-    for p in model.owners.items():
-      if p[1] == keyOfDep(self.__class__):
-        owner_string = p[0]
+    for p in model.owners:
+      if p == keyOfDep(self.__class__):
+        owner_string = p
         break 
     if owner_string == None:
       self[name] = None 
     else:
       c = db.Where([{'type':'series','series':[{'type':'single','condition':(able_id,'=',self['id'])},{'type':'single','operator':'AND','condition':(able_type,'=',owner_string)}]}])
       c.parse()
-      res = db.Table(model.__class__.table).setConnection(model.__class__.connection).conditions(c).first()
+      res = db.Table(model.table).setConnection(model.connection).conditions(c).first()
       loaded = False
       if len(res) < 1:
         if 'default' in r.keys():
@@ -534,7 +534,7 @@ class Model:
           self[name] = None 
       else:
         loaded = True
-        m = model.__class__(res[0])
+        m = model(res[0])
         m.setOriginals(res[0])
         self[name] = m 
       return loaded

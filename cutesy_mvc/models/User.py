@@ -2,6 +2,7 @@ from ..helpers.model import Model
 
 class User(Model):
 	table = 'user'
+	timestamps = False
 	relations = {
 		'image': {
 			'type': 'morphOne',

@@ -276,6 +276,15 @@ for i in imgs:
 	print(i)
 	i.load('imageable')
 	print(i['imageable'])
+	
+print('images from relations')
+
+b1 = BlogPost().find(2)
+b1.load('image')
+print(b1['image'])
+us = User().find(1)
+us.load('image')
+print(us['image'])
 
 ## SCHEMAS
 ### customer 
