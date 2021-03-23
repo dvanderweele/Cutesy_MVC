@@ -17,9 +17,15 @@ Markdown formatted documentation files can be found in the docs folder.
 ### Table of Contents
 
 [1 - Database Migrations](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/migrations.md)
+
 [2 - Database Query Tools](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/db.md)
+
 [3 - Cutify Command Line Utility](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/cutify.md)
+
 [4 - The Cutesy ORM and Data Modeling](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/model.md)
+
 [5 - Routing](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/routes.md)
+
 [6 - Controllers](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/controllers.md)
+
 [7 - Client](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/client.md)
