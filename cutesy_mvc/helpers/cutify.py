@@ -14,6 +14,13 @@ def handleCuteness(userInput):
       outfile = open(p, 'w')
       outfile.write(f'from ..helpers.model import Model\n\nclass {argParts[2]}(Model):\n\tpass')
       outfile.close()
+    elif argParts[1] == 'controller':
+      fn = f'{argParts[2]}.py'
+      p = path.appendDirToRootDir('controllers')
+      p = path.appendFileToDir(p, fn)
+      outfile = open(p, 'w')
+      outfile.write(f'# {argParts[2]}.py\n\nfrom ..helpers.client import freshResponse\n\nclass {argParts[2]}:')
+      outfile.close()
   elif argParts[0] == 'migrate':
     migrate.migrate()
   elif argParts[0] == 'rollback-migrations':

@@ -14,15 +14,22 @@ class Client:
 	def __init__(self):
 		self.id = uuid4()
 		self.__class__.clients.append(self.id)
+	def __del__(self):
+		self.__class__.clients.remove(self.id)
+	def valid(self, identifier):
+		if identifier in self.__class__.clients: 
+			return True 
+		else: 
+			return False
 	def shutdown(self):
 		self.__class__.off.set()
 		self.__class__.server.join()
-	def freshRequest(self):
+	def freshRequest(self, route = '/'):
 		return {
 			'header': {
 				'type': 'request',
-				'route': '/',
-				'requester': None 
+				'route': route,
+				'requester': self.id 
 			},
 			'payload': None 
 		}
