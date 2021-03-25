@@ -19,7 +19,7 @@ def handleCuteness(userInput):
       p = path.appendDirToRootDir('controllers')
       p = path.appendFileToDir(p, fn)
       outfile = open(p, 'w')
-      outfile.write(f'# {argParts[2]}.py\n\nfrom ..helpers.client import freshResponse\n\nclass {argParts[2]}:')
+      outfile.write(f'# {argParts[2]}.py\n\nfrom ..helpers.response import freshResponse\n\nclass {argParts[2]}:')
       outfile.close()
   elif argParts[0] == 'migrate':
     migrate.migrate()

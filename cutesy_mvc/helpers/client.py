@@ -43,12 +43,3 @@ class Client:
 				self.__class__.responses.task_done()
 				return item
 		return None 
-
-def freshResponse():
-	return {
-		'header': {
-			'type': 'response',
-			'request': None
-		},
-		'payload': None
-	}
