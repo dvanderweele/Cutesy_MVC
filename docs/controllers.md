@@ -1,8 +1,10 @@
-You can use the `cutify` tool to generate named controller files with the appropriate boilerplate. The files will already have the import statement for the function you can use to get fresh response objects to fill in your controller methods. Add your own import statements for any utilities you may need, such as user-defined model classes.
+You can use the `cutify` tool to generate named controller files with the appropriate boilerplate. The files will already have the import statement for the function you can use to get fresh response dictionaries to fill in your controller methods. Add your own import statements for any utilities you may need, such as user-defined model classes.
 
 Your controller classes are really just namespaces for static class methods that you are going to reference in your `routes.py` file. You can name them whatever you want, but feel free to follow resourceful naming conventions. 
 
-Your controller methods should ideally always send back a response, even if it's just to say "no." Your controller methods will be passed one argument, the request object. You may attach it in whole to the response object, or just a small part of it. At a minimum, you will probably want to attach the `uuid` that generated the request so that the main thread can route your response to the appropriate part of the user-interface.
+Your controller methods should ideally always send back a response, even if it's just to say "no." Your controller methods will be passed one argument, the request dictionary. 
+
+Use the `freshReponse` method to generate a fresh response dictionary to fill and return. You must pass as the first argument the request dictionary (so it can attach the appropriate client id). The second argument is optional and is a boolean indicating whether you want the original request attached to the response (defaults to false).
 
 An example controller class: 
 
@@ -16,8 +18,7 @@ class UserController:
 	@staticmethod
 	def index(request):
 		users = User().allModels()
-		res = freshResponse()
-		res['header']['request'] = request
+		res = freshResponse(request)
 		res['payload'] = {
 			'users': users
 		}
@@ -25,8 +26,7 @@ class UserController:
 	@staticmethod
 	def show(request):
 		user = User().find(request['payload']['id'])
-		res = freshResponse()
-		res['header']['request'] = request
+		res = freshResponse(request, True)
 		res['payload'] = {
 			'user': user
 		}

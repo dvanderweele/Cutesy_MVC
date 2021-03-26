@@ -1,1 +1,1 @@
-run = 'touch ./cutesy_mvc/tests/client.py'
+run = 'python main.py'

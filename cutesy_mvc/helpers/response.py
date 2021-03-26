@@ -1,8 +1,9 @@
-def freshResponse():
+def freshResponse(request, includeRequest = False):
 	return {
 		'header': {
 			'type': 'response',
-			'request': None
+			'request': request if includeRequest else None,
+			'requester': request['header']['requester']
 		},
 		'payload': None
 	}
