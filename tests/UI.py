@@ -1,4 +1,4 @@
-from ..linker import helpers
+from ..cutesy_mvc import helpers
 
 Test = helpers.test.Test
 Suite = helpers.test.Suite

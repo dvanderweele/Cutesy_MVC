@@ -1,4 +1,4 @@
-from tests import _index
+from .tests import _index
 
 def main():
     suites = _index.suites
