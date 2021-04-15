@@ -30,11 +30,17 @@ Delete the current database file as specified in configuration if it exists, and
 
 ```
 python -m cutesy cutify db:refresh
-``` 
+```
 
 You can use the tool to auto-generate `model` and `controller` file boilerplate. 
 
 ```
 python -m cutesy cutify make:model:User
 python -m cutesy cutify make:controller:UserController
+```
+
+You can use the tool to run all of your tests:
+
+```
+python -m cutesy cutify test
 ```
