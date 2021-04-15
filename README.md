@@ -12,6 +12,14 @@ Taking inspiration from a favorite project of mine: Laravel. Would also like to 
 
 Obviously being a solo project that draws inspiration from a major project, I am not implementing all of the features of Laravel. For example, I am creating systems to migrate, query, and model data from SQLite, but I am not building support for any other database systems.
 
+## Tests
+
+To run the framework's tests (i.e., not user-defined tests), run the project as a module from the directory above repo.
+
+```
+python -m Cutesy_MVC
+```
+
 ## Docs
 
 Markdown formatted documentation files can be found in the docs folder.
