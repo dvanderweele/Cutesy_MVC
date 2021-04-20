@@ -39,3 +39,9 @@ Markdown formatted documentation files can be found in the docs folder.
 [6 - Controllers](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/controllers.md)
 
 [7 - Client](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/client.md)
+
+[8 - StringBuilder](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/string.md)
+
+[9 - Testing](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/test.md)
+
+[10 - UI State Store](https://github.com/dvanderweele/Cutesy_MVC/blob/master/docs/UI.md)
